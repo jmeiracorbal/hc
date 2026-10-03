@@ -17,9 +17,10 @@ jobs:
           - goos: darwin
             goarch: arm64
             runner: macos-14
+          # macos-13 deprecated / long queue; Intel builds use macos-15-intel
           - goos: darwin
             goarch: amd64
-            runner: macos-13
+            runner: macos-15-intel
           - goos: linux
             goarch: amd64
             runner: ubuntu-latest
