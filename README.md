@@ -1,0 +1,218 @@
+# hybrid-coco
+
+[![CI](https://github.com/jmeiracorbal/hybrid-coco/actions/workflows/ci.yml/badge.svg)](https://github.com/jmeiracorbal/hybrid-coco/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![GitHub issues](https://github.com/jmeiracorbal/hybrid-coco/issues)](https://github.com/jmeiracorbal/hybrid-coco/issues)
+
+Local code intelligence for AI agents. Index your codebase once, query it deterministically: **~94% fewer tokens** than grep + cat.
+
+hybrid-coco builds a local SQLite index of your source code using tree-sitter, exposes it via a CLI and an MCP server, and integrates with Claude Code via hooks. No embeddings, no vector database, no Docker. One install command.
+
+```
+curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hybrid-coco/main/install.sh | bash
+hc init
+```
+
+### The problem it solves
+
+When Claude reads a file to find one function, it pays for the entire file:
+
+```
+# Without hybrid-coco
+Read("src/gitlab_helpers.py")             >  12,140 tokens  (whole file)
+
+# With hybrid-coco
+hc_file_context("src/gitlab_helpers.py")  >  297 tokens  (symbols only)  < 97.6% savings
+```
+
+The hook intercepts `Read` and `Grep` calls and suggests the equivalent `hc_*` tool. Same answer, fraction of the tokens.
+
+## How it works
+
+```
+Source files  ──tree-sitter──►  SQLite + FTS5  ──►  CLI (hc)
+   (per project, .hc)                │
+                                     │  ~/.local/share/hybrid-coco/index.db
+                                     │  (shared, multi-project)
+                                     └──────────────►  MCP server (hc_*)
+                                                           │
+                                                    Claude Code hooks
+                                                    intercept Read/Grep
+                                                    > suggest hc_* tools
+```
+
+1. **`hc setup`**: creates the shared DB and installs global hooks/skills/awareness (also run by `install.sh`).
+2. **`hc init`**: writes marker `.hc`, enrolls the project in the shared index, indexes the tree, registers MCP, ensures hooks.
+3. **Query CLI / MCP**: returns symbols, call graph, and file/package outlines — not whole files.
+4. **Hooks**: with `.hc` present, PreToolUse suggests `hc_*` instead of blind `Read`/`Grep`; PostToolUse runs `hc update` after edits.
+
+## Benchmark
+
+Measured on a real Rust codebase: 76 files, 2,242 symbols:
+
+| Query | Traditional | hybrid-coco | Savings |
+|---|---|---|---|
+| Symbol lookup (`TimedExecution`) | 2,227 tok | 51 tok | **97.7%** |
+| Pattern search (`savings`) | 3,164 tok | 334 tok | **89.4%** |
+| File structure (`tracking.rs`) | 12,140 tok | 1,245 tok | **89.7%** |
+| Schema grep (`CREATE TABLE`) | 92 tok | 29 tok | 68.5% |
+| File read (`git.rs`) | 16,343 tok | 377 tok | **97.7%** |
+| **Total (5 queries)** | **33,966 tok** | **2,036 tok** | **~94%** |
+
+Traditional = `grep -rn` + `cat`. hybrid-coco = `hc symbol` + `hc query` + `hc file-context`.
+
+## Quickstart
+
+### 1. Install
+
+**Option A: One-line installer (recommended)**
+
+```bash
+curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hybrid-coco/main/install.sh | bash
+```
+
+Downloads the `hc` binary from GitHub Releases into `~/.local/bin`, verifies the checksum, and runs `hc setup` (shared DB + Claude Code hooks/awareness). Requires macOS or Linux (amd64/arm64).
+
+Pin a version:
+
+```bash
+curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hybrid-coco/main/install.sh | HC_VERSION=v0.2.0 bash
+```
+
+Later upgrades (same machine):
+
+```bash
+hc upgrade                 # check GitHub latest
+hc upgrade --install --yes # download, verify sha256, replace this binary
+```
+
+**Option B: Claude Code plugin**
+
+```bash
+claude plugin marketplace add jmeiracorbal/hybrid-coco
+claude plugin install hybrid-coco@hybrid-coco
+```
+
+Registers the MCP server and hooks automatically. Requires `hc` in PATH — install the binary first (Option A).
+
+**Option C: Build from source**
+
+```bash
+git clone https://github.com/jmeiracorbal/hybrid-coco
+cd hybrid-coco
+CGO_ENABLED=1 go build -o ~/.local/bin/hc ./cmd/hc/
+hc setup
+```
+
+### 2. Index your project
+
+```bash
+cd your-project/
+hc init
+```
+
+`hc init` does the following:
+- Creates marker `.hc` (project opt-in; id + running `hc` version)
+- Enrolls the project in the shared index at `~/.local/share/hybrid-coco/index.db`
+- Indexes the tree (tree-sitter, SHA-256 incremental)
+- Registers the MCP server in `.claude/settings.json`
+- Ensures global hooks/skills under `~/.claude/`
+
+Restart Claude Code to activate.
+
+### 3. Use from Claude Code
+
+MCP tools (require `.hc` in the project cwd):
+
+```
+hc_search("savings_pct")       # FTS5 search over names, signatures, docstrings
+hc_symbol("TimedExecution")    # exact/prefix symbol lookup
+hc_file_context("src/git.rs")  # symbols in a file + Read range hints
+hc_package("internal/store")   # directory outline + fan-in
+hc_explore("Open")             # callers, callees, containment
+hc_impact("Open")              # blast radius
+hc_path("main", "Open")        # call path (BFS)
+hc_status()                    # index stats + call resolve ratio
+```
+
+## CLI reference
+
+```
+hc index [PATH]          Index PATH (default: cwd); --force reindexes all
+hc update [PATH]         Re-index only changed files (SHA-256 diff) + prune deleted
+hc status [PATH]         Index stats: files, symbols, edges, calls resolved
+hc query <TEXT>          FTS5 trigram search on name, signature, docstring
+hc symbol <NAME>         Exact name lookup, then prefix fallback
+hc file-context <PATH>   All symbols in PATH (~97% savings vs cat)
+hc package <DIR>         Directory outline with fan-in and Read range hints
+hc explore <NAME>        Callers, callees, containment, fan-in/out
+hc impact <NAME>         Blast radius: callers + file importers
+hc path <FROM> <TO>      Call path between two symbols
+hc serve                 Start MCP server (stdio)
+hc init [PATH]           Marker .hc + enroll + index + register MCP + hooks
+hc reset [PATH]          Remove .hc and this project's rows from the shared DB
+hc setup                 Shared index.db + global hooks/skills (used by install.sh)
+hc doctor [--json]       Diagnose binary, schema, marker, legacy indexes/
+hc doctor --fix [--yes] Apply repairs (destructive ones need --yes)
+hc migrate               Apply pending shared-schema migrations (+ backup)
+hc migrate --restore-backup --yes [--backup PATH]
+hc migrate --import-legacy --map id=/abs/path [--purge-legacy --yes]
+hc upgrade               Compare running binary vs GitHub latest
+hc upgrade --yes         Print install.sh hint
+hc upgrade --install --yes
+```
+
+## Maintenance
+
+Shared index path: `~/.local/share/hybrid-coco/index.db` (schema version in `meta`).
+
+| Situation | Command |
+|---|---|
+| Schema pending after upgrade | `hc migrate` or `hc doctor --fix` |
+| Broken / too-old DB, have `.bak` | `hc migrate --restore-backup --yes` |
+| Old layout `indexes/<id>/` still on disk | `hc migrate --import-legacy --map id=/abs/path` then `--purge-legacy --yes`, or `hc doctor --fix --yes` to purge only |
+| Binary outdated | `hc upgrade --install --yes` |
+| Full diagnose for agents | `hc doctor --json` (skill `hc-doctor`) |
+
+Open never auto-migrates a non-empty DB. There are no down-migrations — rollback is restore from `index.db.bak.*`.
+
+## Supported languages
+
+| Language | Parser |
+|---|---|
+| Go | tree-sitter-go |
+| Python | tree-sitter-python |
+| Rust | tree-sitter-rust |
+| JavaScript | tree-sitter-javascript |
+| TypeScript / TSX | tree-sitter-typescript |
+
+Adding a language means implementing a parser in `internal/parsers/` (modular plugin load is a future track).
+
+## Design decisions
+
+**SQLite + FTS5, not a vector database**: deterministic results, zero infrastructure. One shared file for all enrolled projects; each project opts in with `.hc`.
+
+**tree-sitter, not regex**: symbol and call extraction is grammar-aware. Call edges resolve with a precision ladder (qualifier → same-file → project).
+
+**Single Go binary**: `hc` is CLI + MCP server. No Python runtime. Distributed via GitHub Releases + `install.sh`.
+
+**No server process**: `hc serve` runs as a stdio MCP server launched on demand by Claude Code. There is no daemon to manage.
+
+**Incremental by default**: `hc update` re-indexes only files whose SHA-256 has changed and prunes deleted files. Full re-index with `hc index --force`.
+
+**Forward-only schema**: `hc migrate` applies pending steps; backups are automatic; restore via `--restore-backup`.
+
+## Development
+
+```bash
+git clone https://github.com/jmeiracorbal/hybrid-coco
+cd hybrid-coco
+CGO_ENABLED=1 go build -o hc ./cmd/hc/
+./hc --version
+```
+
+Run tests:
+
+```bash
+CGO_ENABLED=1 go test ./...
+```

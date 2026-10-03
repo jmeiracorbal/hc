@@ -1,0 +1,23 @@
+{
+  "name": "hybrid-coco",
+  "metadata": {
+    "description": "Local code intelligence for Claude Code: index, query and expose codebase context deterministically — fewer tokens than grep + cat."
+  },
+  "owner": {
+    "name": "jmeiracorbal",
+    "email": "jmeiracorbal@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "hybrid-coco",
+      "description": "Deterministic code navigation via local SQLite index. Use hc_* MCP tools instead of reading files.",
+      "version": "0.3.0",
+      "author": {
+        "name": "jmeiracorbal"
+      },
+      "source": "./plugin",
+      "category": "productivity",
+      "homepage": "https://github.com/jmeiracorbal/hybrid-coco"
+    }
+  ]
+}

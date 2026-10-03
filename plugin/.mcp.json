@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "hybrid-coco": {
+      "command": "hc",
+      "args": ["serve"]
+    }
+  }
+}

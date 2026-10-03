@@ -1,0 +1,16 @@
+{
+  "name": "hybrid-coco",
+  "description": "Deterministic code navigation via local SQLite index. Use hc_* MCP tools instead of reading files.",
+  "version": "0.3.0",
+  "author": {
+    "name": "jmeiracorbal"
+  },
+  "homepage": "https://github.com/jmeiracorbal/hybrid-coco",
+  "repository": "https://github.com/jmeiracorbal/hybrid-coco",
+  "license": "Apache-2.0",
+  "skills": [
+    "./skills/hc-navigate",
+    "./skills/hc-graph",
+    "./skills/hc-index"
+  ]
+}
