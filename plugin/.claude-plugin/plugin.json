@@ -5,12 +5,13 @@
   "author": {
     "name": "jmeiracorbal"
   },
-  "homepage": "https://github.com/jmeiracorbal/hybrid-coco",
-  "repository": "https://github.com/jmeiracorbal/hybrid-coco",
+  "homepage": "https://github.com/jmeiracorbal/hc",
+  "repository": "https://github.com/jmeiracorbal/hc",
   "license": "Apache-2.0",
   "skills": [
     "./skills/hc-navigate",
     "./skills/hc-graph",
-    "./skills/hc-index"
+    "./skills/hc-index",
+    "./skills/hc-doctor"
   ]
 }

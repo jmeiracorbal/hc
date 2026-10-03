@@ -1,15 +1,15 @@
-# hybrid-coco
+# hc
 
-[![CI](https://github.com/jmeiracorbal/hybrid-coco/actions/workflows/ci.yml/badge.svg)](https://github.com/jmeiracorbal/hybrid-coco/actions/workflows/ci.yml)
+[![CI](https://github.com/jmeiracorbal/hc/actions/workflows/ci.yml/badge.svg)](https://github.com/jmeiracorbal/hc/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![GitHub issues](https://github.com/jmeiracorbal/hybrid-coco/issues)](https://github.com/jmeiracorbal/hybrid-coco/issues)
+[![GitHub issues](https://github.com/jmeiracorbal/hc/issues)](https://github.com/jmeiracorbal/hc/issues)
 
 Local code intelligence for AI agents. Index your codebase once, query it deterministically: **~94% fewer tokens** than grep + cat.
 
-hybrid-coco builds a local SQLite index of your source code using tree-sitter, exposes it via a CLI and an MCP server, and integrates with Claude Code via hooks. No embeddings, no vector database, no Docker. One install command.
+`hc` builds a local SQLite index of your source code using tree-sitter, exposes it via a CLI and an MCP server, and integrates with Claude Code via hooks. No embeddings, no vector database, no Docker. One install command.
 
 ```
-curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hybrid-coco/main/install.sh | bash
+curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hc/main/install.sh | bash
 hc init
 ```
 
@@ -18,10 +18,10 @@ hc init
 When Claude reads a file to find one function, it pays for the entire file:
 
 ```
-# Without hybrid-coco
+# Without hc
 Read("src/gitlab_helpers.py")             >  12,140 tokens  (whole file)
 
-# With hybrid-coco
+# With hc
 hc_file_context("src/gitlab_helpers.py")  >  297 tokens  (symbols only)  < 97.6% savings
 ```
 
@@ -50,7 +50,7 @@ Source files  ──tree-sitter──►  SQLite + FTS5  ──►  CLI (hc)
 
 Measured on a real Rust codebase: 76 files, 2,242 symbols:
 
-| Query | Traditional | hybrid-coco | Savings |
+| Query | Traditional | hc | Savings |
 |---|---|---|---|
 | Symbol lookup (`TimedExecution`) | 2,227 tok | 51 tok | **97.7%** |
 | Pattern search (`savings`) | 3,164 tok | 334 tok | **89.4%** |
@@ -59,7 +59,7 @@ Measured on a real Rust codebase: 76 files, 2,242 symbols:
 | File read (`git.rs`) | 16,343 tok | 377 tok | **97.7%** |
 | **Total (5 queries)** | **33,966 tok** | **2,036 tok** | **~94%** |
 
-Traditional = `grep -rn` + `cat`. hybrid-coco = `hc symbol` + `hc query` + `hc file-context`.
+Traditional = `grep -rn` + `cat`. hc = `hc symbol` + `hc query` + `hc file-context`.
 
 ## Quickstart
 
@@ -68,7 +68,7 @@ Traditional = `grep -rn` + `cat`. hybrid-coco = `hc symbol` + `hc query` + `hc f
 **Option A: One-line installer (recommended)**
 
 ```bash
-curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hybrid-coco/main/install.sh | bash
+curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hc/main/install.sh | bash
 ```
 
 Downloads the `hc` binary from GitHub Releases into `~/.local/bin`, verifies the checksum, and runs `hc setup` (shared DB + Claude Code hooks/awareness). Requires macOS or Linux (amd64/arm64).
@@ -76,7 +76,7 @@ Downloads the `hc` binary from GitHub Releases into `~/.local/bin`, verifies the
 Pin a version:
 
 ```bash
-curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hybrid-coco/main/install.sh | HC_VERSION=v0.2.0 bash
+curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hc/main/install.sh | HC_VERSION=v0.3.0 bash
 ```
 
 Later upgrades (same machine):
@@ -89,7 +89,7 @@ hc upgrade --install --yes # download, verify sha256, replace this binary
 **Option B: Claude Code plugin**
 
 ```bash
-claude plugin marketplace add jmeiracorbal/hybrid-coco
+claude plugin marketplace add jmeiracorbal/hc
 claude plugin install hybrid-coco@hybrid-coco
 ```
 
@@ -98,8 +98,8 @@ Registers the MCP server and hooks automatically. Requires `hc` in PATH — inst
 **Option C: Build from source**
 
 ```bash
-git clone https://github.com/jmeiracorbal/hybrid-coco
-cd hybrid-coco
+git clone https://github.com/jmeiracorbal/hc
+cd hc
 CGO_ENABLED=1 go build -o ~/.local/bin/hc ./cmd/hc/
 hc setup
 ```
@@ -205,8 +205,8 @@ Adding a language means implementing a parser in `internal/parsers/` (modular pl
 ## Development
 
 ```bash
-git clone https://github.com/jmeiracorbal/hybrid-coco
-cd hybrid-coco
+git clone https://github.com/jmeiracorbal/hc
+cd hc
 CGO_ENABLED=1 go build -o hc ./cmd/hc/
 ./hc --version
 ```

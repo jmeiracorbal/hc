@@ -13,7 +13,7 @@ import (
 
 const (
 	RepoOwner = "jmeiracorbal"
-	RepoName  = "hybrid-coco"
+	RepoName  = "hc"
 )
 
 // Client talks to GitHub releases. HTTPClient and BaseURL are injectable for tests.

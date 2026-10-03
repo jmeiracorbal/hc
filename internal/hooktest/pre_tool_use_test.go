@@ -15,6 +15,9 @@ import (
 )
 
 func TestPreToolUseAllowsRangedRead(t *testing.T) {
+	// capture before HOME override — go build must not write GOMODCACHE under t.TempDir
+	buildEnv := append([]string(nil), os.Environ()...)
+
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	config.SetDataRootForTest("")
@@ -57,6 +60,7 @@ func TestPreToolUseAllowsRangedRead(t *testing.T) {
 	hcBin := filepath.Join(hcDir, "hc")
 	build := exec.Command("go", "build", "-o", hcBin, "./cmd/hc")
 	build.Dir = repoRoot
+	build.Env = buildEnv
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build hc: %v\n%s", err, out)
 	}

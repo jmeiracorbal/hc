@@ -12,7 +12,7 @@ import (
 
 func TestLatestRelease_HTTPTest(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/repos/jmeiracorbal/hybrid-coco/releases/latest" {
+		if r.URL.Path != "/repos/jmeiracorbal/hc/releases/latest" {
 			http.NotFound(w, r)
 			return
 		}
@@ -51,7 +51,7 @@ func TestCompareVersions(t *testing.T) {
 
 func TestInstallHint(t *testing.T) {
 	h := upgrade.InstallHint()
-	if !strings.Contains(h, "jmeiracorbal/hybrid-coco") {
+	if !strings.Contains(h, "jmeiracorbal/hc") {
 		t.Fatalf("hint missing repo: %s", h)
 	}
 	if !strings.Contains(h, "install.sh") {

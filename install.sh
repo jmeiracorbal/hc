@@ -1,25 +1,25 @@
 #!/bin/bash
-# hybrid-coco installer
-# Usage: curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hybrid-coco/main/install.sh | bash
+# hc installer
+# Usage: curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hc/main/install.sh | bash
 #
 # Environment overrides:
-#   HC_VERSION=v0.2.0 bash install.sh
+#   HC_VERSION=v0.3.0 bash install.sh
 #   HC_INSTALL_DIR=$HOME/bin bash install.sh
 #   HC_DRY_RUN=true bash install.sh
 
 set -e
 
-REPO="jmeiracorbal/hybrid-coco"
+REPO="jmeiracorbal/hc"
 INSTALL_DIR="${HC_INSTALL_DIR:-$HOME/.local/bin}"
 DRY_RUN="${HC_DRY_RUN:-false}"
 HC_VERSION="${HC_VERSION:-}"
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
-info()  { printf "\033[1;34m[hybrid-coco]\033[0m %s\n" "$*"; }
-ok()    { printf "\033[1;32m[hybrid-coco]\033[0m %s\n" "$*"; }
-err()   { printf "\033[1;31m[hybrid-coco]\033[0m %s\n" "$*" >&2; exit 1; }
-warn()  { printf "\033[1;33m[hybrid-coco]\033[0m %s\n" "$*"; }
+info()  { printf "\033[1;34m[hc]\033[0m %s\n" "$*"; }
+ok()    { printf "\033[1;32m[hc]\033[0m %s\n" "$*"; }
+err()   { printf "\033[1;31m[hc]\033[0m %s\n" "$*" >&2; exit 1; }
+warn()  { printf "\033[1;33m[hc]\033[0m %s\n" "$*"; }
 
 dry() {
   if [ "$DRY_RUN" = "true" ]; then
