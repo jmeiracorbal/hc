@@ -4,7 +4,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![GitHub issues](https://github.com/jmeiracorbal/hc/issues)](https://github.com/jmeiracorbal/hc/issues)
 
-Local code intelligence for AI agents. Index your codebase once, query it deterministically: **~94% fewer tokens** than grep + cat.
+Local code intelligence for AI agents. Index your codebase once, query it deterministically: **~87% fewer tokens** than grep + cat.
 
 `hc` builds a local SQLite index of your source code using tree-sitter, exposes it via a CLI and an MCP server, and integrates with Claude Code via hooks. No embeddings, no vector database, no Docker. One install command.
 
@@ -19,10 +19,10 @@ When Claude reads a file to find one function, it pays for the entire file:
 
 ```
 # Without hc
-Read("src/gitlab_helpers.py")             >  12,140 tokens  (whole file)
+cat("internal/store/store_test.go")              >  32,531 tokens  (whole file)
 
 # With hc
-hc_file_context("src/gitlab_helpers.py")  >  297 tokens  (symbols only)  < 97.6% savings
+hc file-context("internal/store/store_test.go")  >   3,448 tokens  (symbols)  < 89.4% savings
 ```
 
 The hook intercepts `Read` and `Grep` calls and suggests the equivalent `hc_*` tool. Same answer, fraction of the tokens.
@@ -48,18 +48,20 @@ Source files  ──tree-sitter──►  SQLite + FTS5  ──►  CLI (hc)
 
 ## Benchmark
 
-Measured on a real Rust codebase: 76 files, 2,242 symbols:
+Measured on [mnemo](https://github.com/jmeiracorbal/mnemo) (Go) with hc v0.1.2: 125 files, 1,372 symbols. Tokens ≈ chars/4.
 
 | Query | Traditional | hc | Savings |
 |---|---|---|---|
-| Symbol lookup (`TimedExecution`) | 2,227 tok | 51 tok | **97.7%** |
-| Pattern search (`savings`) | 3,164 tok | 334 tok | **89.4%** |
-| File structure (`tracking.rs`) | 12,140 tok | 1,245 tok | **89.7%** |
-| Schema grep (`CREATE TABLE`) | 92 tok | 29 tok | 68.5% |
-| File read (`git.rs`) | 16,343 tok | 377 tok | **97.7%** |
-| **Total (5 queries)** | **33,966 tok** | **2,036 tok** | **~94%** |
+| Symbol lookup (`AddObservation`) | 6,502 tok | 319 tok | **95.1%** |
+| Pattern search (`ImportObservation`) | 229 tok | 35 tok | **84.7%** |
+| File structure (`migrate.go`) | 4,694 tok | 937 tok | **80.0%** |
+| File structure (`projects.go`) | 5,339 tok | 1,528 tok | **71.4%** |
+| File structure (`store_test.go`) | 32,531 tok | 3,448 tok | **89.4%** |
+| Package outline (`internal/mcp`) | 15,344 tok | 1,841 tok | **88.0%** |
+| Impact (`AddObservation`) | 6,502 tok | 456 tok | **93.0%** |
+| **Total (7 queries)** | **71,141 tok** | **8,564 tok** | **~88%** |
 
-Traditional = `grep -rn` + `cat`. hc = `hc symbol` + `hc query` + `hc file-context`.
+Traditional = `rg` + `cat`. hc = `hc symbol` + `hc query` + `hc file-context` + `hc package` + `hc impact`. Content-only greps (e.g. SQL literals) are outside FTS scope and excluded.
 
 ## Quickstart
 
