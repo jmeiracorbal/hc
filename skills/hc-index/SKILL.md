@@ -10,14 +10,14 @@ Project index lifecycle for hybrid-coco. Independent from **hc-navigate** / **hc
 ## Model
 
 - Marker: `.hc` in the project root (`version` = running `hc` core version, `id` = sha256 of canonical root).
-- Store: single shared DB at `~/.local/share/hybrid-coco/index.db` (not inside the repo); projects are enrolled rows.
+- Store: single shared DB at `~/.local/share/hc/hc.db` (not inside the repo); projects are enrolled rows.
 - Without `.hc`: CLI/MCP that need a project fail; hooks no-op.
 
 ## Commands
 
 | Command | When |
 |---|---|
-| `hc setup` | Global hooks + awareness + skills + create shared `index.db` |
+| `hc setup` | Global hooks + awareness + skills + create shared `hc.db` |
 | `hc init [path]` | Create `.hc`, enroll in shared index, index, register MCP |
 | `hc index [path]` | Full (re)index when marker present and enrolled |
 | `hc update [path]` | Incremental reindex (changed sha256) |
@@ -59,7 +59,7 @@ hc index .            # full rebuild
 Index schema is not migrated in place. Wipe shared index and rebuild:
 
 ```bash
-rm ~/.local/share/hybrid-coco/index.db
+rm ~/.local/share/hc/hc.db
 hc setup
 hc reset .            # if .hc still present
 hc init .

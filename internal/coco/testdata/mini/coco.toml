@@ -1,0 +1,10 @@
+id = "hc/test-mini"
+language = "minilang"
+extensions = [".mini"]
+priority = 1
+contract = "wasm/v1"
+platforms = ["wasm32/wasi"]
+
+[hc-version]
+version = "0.0.0-dev"
+constraint = "min"

@@ -1,6 +1,7 @@
 package indexer
 
 import (
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
@@ -13,6 +14,7 @@ import (
 
 	ignore "github.com/sabhiram/go-gitignore"
 
+	"github.com/jmeiracorbal/hybrid-coco/internal/coco"
 	"github.com/jmeiracorbal/hybrid-coco/internal/config"
 	"github.com/jmeiracorbal/hybrid-coco/internal/parsers"
 	"github.com/jmeiracorbal/hybrid-coco/internal/store"
@@ -38,6 +40,17 @@ func IndexPath(start string, force bool) (Result, error) {
 		return Result{}, err
 	}
 	defer st.Close()
+
+	pins, err := coco.LoadPins(root)
+	if err != nil {
+		return Result{}, err
+	}
+	cache := coco.NewCache(context.Background())
+	defer cache.Close()
+	resolver, err := coco.LoadResolver(cache)
+	if err != nil {
+		return Result{}, err
+	}
 
 	gi := loadGitignore(root)
 	var result Result
@@ -82,10 +95,16 @@ func IndexPath(start string, force bool) (Result, error) {
 			return nil
 		}
 
-		lang := parsers.DetectLanguage(path)
-		if lang == "" {
+		c, err := resolver.Resolve(path, pins)
+		if err != nil {
+			log.Printf("coco resolve %s: %v", path, err)
+			result.Errors++
 			return nil
 		}
+		if c == nil {
+			return nil
+		}
+		lang := c.Language()
 
 		seen[rel] = struct{}{}
 		sha := sha256Hex(data)
@@ -112,7 +131,12 @@ func IndexPath(start string, force bool) (Result, error) {
 			result.Errors++
 			return nil
 		}
-		parsed := parsers.ParseFile(path, data)
+		parsed, err := coco.ParseAndValidate(c, data, path)
+		if err != nil {
+			log.Printf("coco parse %s: %v", path, err)
+			result.Errors++
+			return nil
+		}
 		if err := st.InsertSymbols(fileID, parsed.Symbols); err != nil {
 			result.Errors++
 			return nil

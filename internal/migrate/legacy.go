@@ -104,7 +104,7 @@ func ImportLegacy(sharedPath string, maps LegacyMap, purge bool) (ImportLegacyRe
 			res.Skipped = append(res.Skipped, id)
 			continue
 		}
-		srcPath := filepath.Join(indexesDir, id, config.IndexFile)
+		srcPath := filepath.Join(indexesDir, id, config.LegacyPerProjectDBFile)
 		if err := importOneLegacy(dst, srcPath, id, root); err != nil {
 			return res, fmt.Errorf("import %s: %w", id, err)
 		}

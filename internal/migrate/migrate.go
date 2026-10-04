@@ -50,6 +50,11 @@ var Migrations = []Migration{
 		Name:    "baseline_v5",
 		Up:      upEnsureV5,
 	},
+	{
+		Version: 6,
+		Name:    "cocos_registry",
+		Up:      upEnsureV6Cocos,
+	},
 }
 
 const baselineSQL = `
@@ -115,6 +120,18 @@ CREATE TRIGGER IF NOT EXISTS symbols_ad_fts
 AFTER DELETE ON symbols BEGIN
     DELETE FROM symbols_fts WHERE rowid = OLD.id;
 END;
+
+CREATE TABLE IF NOT EXISTS cocos (
+    id            TEXT PRIMARY KEY NOT NULL,
+    language      TEXT NOT NULL,
+    version       TEXT NOT NULL,
+    priority      INTEGER NOT NULL,
+    contract      TEXT NOT NULL,
+    wasm_path     TEXT NOT NULL,
+    manifest_path TEXT NOT NULL,
+    installed_at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_cocos_language ON cocos(language);
 `
 
 func CurrentSchema() int {
@@ -324,6 +341,23 @@ func upEnsureV5(tx *sql.Tx) error {
 	return nil
 }
 
+func upEnsureV6Cocos(tx *sql.Tx) error {
+	_, err := tx.Exec(`
+CREATE TABLE IF NOT EXISTS cocos (
+    id            TEXT PRIMARY KEY NOT NULL,
+    language      TEXT NOT NULL,
+    version       TEXT NOT NULL,
+    priority      INTEGER NOT NULL,
+    contract      TEXT NOT NULL,
+    wasm_path     TEXT NOT NULL,
+    manifest_path TEXT NOT NULL,
+    installed_at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_cocos_language ON cocos(language);
+`)
+	return err
+}
+
 func columnExists(tx *sql.Tx, table, column string) (bool, error) {
 	var n int
 	err := tx.QueryRow(
@@ -336,7 +370,7 @@ func columnExists(tx *sql.Tx, table, column string) (bool, error) {
 	return n > 0, nil
 }
 
-// Backup checkpoints WAL then copies dbPath to index.db.bak.<utc>.
+// Backup checkpoints WAL then copies dbPath to <db>.bak.<utc>.
 func Backup(dbPath string) (bakPath string, err error) {
 	if dbPath == "" {
 		return "", fmt.Errorf("db path is required")

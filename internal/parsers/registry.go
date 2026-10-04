@@ -6,28 +6,35 @@ import (
 	"sync"
 )
 
-var extMap = map[string]string{
-	".py":  "python",
-	".js":  "javascript",
-	".jsx": "javascript",
-	".ts":  "typescript",
-	".tsx": "tsx",
-	".rs":  "rust",
-	".go":  "go",
-}
-
+// legacy language map kept for GetParser(language) callers that pass a language key.
 var (
 	parserMu sync.Mutex
 	parsers  = map[string]Parser{}
+	langExt  = map[string][]string{
+		"python":     {".py"},
+		"javascript": {".js", ".jsx"},
+		"typescript": {".ts"},
+		"tsx":        {".tsx"},
+		"rust":       {".rs"},
+		"go":         {".go"},
+	}
 )
 
-// DetectLanguage returns the language key for a file path, or empty if unsupported.
+// DetectLanguage returns the built-in language key for a file path, or empty if unsupported.
+// Prefer coco.Resolver when installed cocos / pins are in play.
 func DetectLanguage(path string) string {
 	ext := strings.ToLower(filepath.Ext(path))
-	return extMap[ext]
+	for lang, exts := range langExt {
+		for _, e := range exts {
+			if e == ext {
+				return lang
+			}
+		}
+	}
+	return ""
 }
 
-// GetParser returns a cached parser for the language.
+// GetParser returns a cached built-in parser for the language.
 func GetParser(language string) (Parser, error) {
 	parserMu.Lock()
 	defer parserMu.Unlock()
@@ -61,7 +68,8 @@ func GetParser(language string) (Parser, error) {
 	return p, nil
 }
 
-// ParseFile detects language and extracts symbols + refs.
+// ParseFile detects built-in language and extracts symbols + refs.
+// Prefer coco.ParseAndValidate via coco.Resolver for modular cocos.
 func ParseFile(path string, source []byte) ParseResult {
 	lang := DetectLanguage(path)
 	if lang == "" {

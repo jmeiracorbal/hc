@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/jmeiracorbal/hybrid-coco/internal/migrate"
@@ -101,15 +102,19 @@ func TestApplyPending_V4ToV5(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(applied) != 1 || applied[0] != 5 {
-		t.Fatalf("applied=%v want [5]", applied)
+	if len(applied) != 2 || applied[0] != 5 || applied[1] != 6 {
+		t.Fatalf("applied=%v want [5 6]", applied)
 	}
 	if !hasToQualifier(t, db) {
 		t.Fatal("expected to_qualifier after migrate")
 	}
 	ver, err := migrate.ReadVersion(db)
-	if err != nil || ver != 5 {
-		t.Fatalf("version=%d err=%v want 5", ver, err)
+	if err != nil || ver != migrate.CurrentSchema() {
+		t.Fatalf("version=%d err=%v want %d", ver, err, migrate.CurrentSchema())
+	}
+	var cocos int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='cocos'`).Scan(&cocos); err != nil || cocos != 1 {
+		t.Fatalf("cocos table missing: count=%d err=%v", cocos, err)
 	}
 	var root string
 	if err := db.QueryRow(`SELECT root FROM projects WHERE id='p1'`).Scan(&root); err != nil {
@@ -151,14 +156,15 @@ func TestPending_SchemaAhead(t *testing.T) {
 	if _, err := migrate.ApplyPending(db); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(`UPDATE meta SET value='6' WHERE key='schema_version'`); err != nil {
+	ahead := migrate.CurrentSchema() + 1
+	if _, err := db.Exec(`UPDATE meta SET value=? WHERE key='schema_version'`, strconv.Itoa(ahead)); err != nil {
 		t.Fatal(err)
 	}
 	_, have, want, err := migrate.Pending(db)
 	if !errors.Is(err, migrate.ErrSchemaAhead) {
 		t.Fatalf("err=%v want ErrSchemaAhead", err)
 	}
-	if have != 6 || want != migrate.CurrentSchema() {
+	if have != ahead || want != migrate.CurrentSchema() {
 		t.Fatalf("have=%d want=%d", have, want)
 	}
 	if err := migrate.CheckReady(db); !errors.Is(err, migrate.ErrSchemaAhead) {
@@ -175,7 +181,7 @@ func TestCheckReady_PendingV4(t *testing.T) {
 		t.Fatalf("err=%v want ErrMigrationsPending", err)
 	}
 	var se *migrate.SchemaError
-	if !errors.As(err, &se) || se.Have != 4 || se.Want != 5 {
+	if !errors.As(err, &se) || se.Have != 4 || se.Want != migrate.CurrentSchema() {
 		t.Fatalf("SchemaError=%+v", err)
 	}
 }

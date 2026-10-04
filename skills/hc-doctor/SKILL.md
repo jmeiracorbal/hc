@@ -1,55 +1,65 @@
 ---
 name: hc-doctor
-description: Use when hc migrate is needed, ErrMigrationsPending / schema errors, binary outdated, marker version mismatch after upgrade, legacy indexes/, or index/status broken post-update. Diagnose with hc doctor --json and apply safe repairs.
+description: ALWAYS use on ErrMigrationsPending, schema errors, broken index/status after upgrade, marker mismatch, or legacy data-root. Auto-recovery is built in — run hc doctor --fix without asking the user for migrate.
 ---
 
 # hc-doctor
 
-Diagnose and repair hybrid-coco shared index + marker + binary freshness. Prefer this over wiping `index.db` unless doctor offers `recreate_empty_db`.
+Diagnose and **auto-recover** hybrid-coco. Schema migrate is not a user decision: the agent (and `hc upgrade --install`) apply safe repairs. Gate on project marker `.hc` when diagnosing marker/version mismatches.
+
+## Auto-recovery (mandatory)
+
+hc self-heals safe problems. When anything looks wrong (migrations pending, marker mismatch, legacy data root, post-upgrade breakage):
+
+```bash
+hc doctor --fix --json
+```
+
+Do **not** ask the user whether to migrate. Do **not** tell them to run `hc migrate` manually first. `doctor --fix` already applies `apply_migrations` (with backup), `migrate_data_root`, and `sync_marker_version`. It loops until stable.
+
+Then re-check `healthy` in the JSON. If still unhealthy only for destructive repairs (`recreate_empty_db`, `purge_legacy_indexes`, `restore_latest_backup`), explain and ask once before:
+
+```bash
+hc doctor --fix --yes --json
+```
+
+Or restore explicitly:
+
+```bash
+hc migrate --restore-backup --yes
+```
 
 ## Model
 
-- Shared DB: `~/.local/share/hybrid-coco/index.db` (`meta.schema_version` int).
-- Migrations: forward-only via `hc migrate` (Open never auto-migrates non-empty DBs).
-- Rollback: restore from `index.db.bak.*` — no down-migrations.
-- Legacy layout: `indexes/<id>/index.db` is detected, not auto-deleted.
-- Marker `.hc`: project opt-in; `version` must match running `hc` core version.
-- Binary updates: `hc upgrade --install --yes` (checksum verified) or `install.sh`.
+- Shared DB: `~/.local/share/hc/hc.db` (`meta.schema_version` int).
+- Project marker `.hc`: opt-in; `version` must match running `hc` core version.
+- Open fails fast on pending migrations (`ErrMigrationsPending`) — that is the signal to auto-recover, not to stop.
+- `hc upgrade --install --yes` replaces the binary then **re-execs** `hc doctor --fix` on the new binary (old process cannot migrate to a newer schema).
+- Rollback: `hc.db.bak.*` via `--restore-backup` — no down-migrations.
+- Legacy `indexes/<id>/`: detected; purge needs `--yes`.
 
-## Mandatory flow
+## Flow
 
-```bash
-hc doctor --json
-```
-
-1. Read `schema.pending`, `binary.outdated`, `marker.version_match`, `legacy.present`, `repairs_available`.
-2. If `pending` non-empty → `hc migrate` (or `hc doctor --fix` when `apply_migrations` is listed).
-3. If `binary.outdated` → tell user; propose `hc upgrade --install --yes`. Do not install without explicit user OK.
-4. If `legacy.present` → list ids; import with `hc migrate --import-legacy --map id=/abs/path [--purge-legacy --yes]`, or purge via `hc doctor --fix --yes` (`purge_legacy_indexes`).
-5. If only marker version mismatch and schema OK → `hc doctor --fix` (`sync_marker_version`) or `hc init` if id mismatch.
-6. If `recreate_empty_db` / `restore_latest_backup` → require explicit user OK, then `hc doctor --fix --yes` or `hc migrate --restore-backup --yes`.
-7. Re-run `hc doctor --json` until `healthy: true`.
-8. Then `hc status` / `hc update` only if doctor/index still empty or stale.
+1. `hc doctor --fix --json` immediately (auto-recovery).
+2. If `binary.outdated` → propose `hc upgrade --install --yes` (needs user OK for download). After install, recovery runs automatically.
+3. If still `legacy` / recreate / restore in `repairs_available` → ask user, then `--fix --yes` or `hc migrate --restore-backup --yes`.
+4. Re-run until `healthy: true`.
+5. `hc status` / `hc update` only if index empty or stale after recovery.
 
 ## Commands
 
 | Command | When |
 |---|---|
-| `hc doctor` | Human-readable diagnosis |
-| `hc doctor --json` | Agent parse (stable fields) |
-| `hc doctor --fix` | Safe repairs only |
+| `hc doctor --fix --json` | Default agent action — safe auto-recovery |
+| `hc doctor --json` | Diagnose only |
 | `hc doctor --fix --yes` | Include destructive recreate/purge/restore |
-| `hc migrate` | Apply pending schema steps (+ backup) |
+| `hc migrate` | Manual equivalent of schema repair (prefer doctor --fix) |
 | `hc migrate --restore-backup --yes` | Restore latest (or `--backup PATH`) `.bak` |
-| `hc migrate --import-legacy --map id=/path` | Import legacy per-project DB |
-| `hc migrate --import-legacy --map id=/path --purge-legacy --yes` | Import then delete `indexes/` |
-| `hc upgrade` | Compare running vs GitHub latest |
-| `hc upgrade --yes` | Print `install.sh` curl hint |
-| `hc upgrade --install --yes` | Download, verify sha256, replace binary |
+| `hc upgrade --install --yes` | Binary update + automatic post-upgrade recovery |
 
 ## Do not
 
-- Hand-edit SQLite.
-- Delete `index.db` without doctor backup / recreate path.
-- Auto-download binaries without user confirmation (`--install --yes` only after OK).
+- Ask the user to decide on schema migrate.
+- Hand-edit SQLite or delete `hc.db` without doctor backup/recreate path.
+- Auto-download binaries without user OK.
 - Assume down-migrations exist — use `--restore-backup`.

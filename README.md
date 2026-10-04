@@ -32,7 +32,7 @@ The hook intercepts `Read` and `Grep` calls and suggests the equivalent `hc_*` t
 ```
 Source files  ──tree-sitter──►  SQLite + FTS5  ──►  CLI (hc)
    (per project, .hc)                │
-                                     │  ~/.local/share/hybrid-coco/index.db
+                                     │  ~/.local/share/hc/hc.db
                                      │  (shared, multi-project)
                                      └──────────────►  MCP server (hc_*)
                                                            │
@@ -115,7 +115,7 @@ hc init
 
 `hc init` does the following:
 - Creates marker `.hc` (project opt-in; id + running `hc` version)
-- Enrolls the project in the shared index at `~/.local/share/hybrid-coco/index.db`
+- Enrolls the project in the shared index at `~/.local/share/hc/hc.db`
 - Indexes the tree (tree-sitter, SHA-256 incremental)
 - Registers the MCP server in `.claude/settings.json`
 - Ensures global hooks/skills under `~/.claude/`
@@ -153,7 +153,7 @@ hc path <FROM> <TO>      Call path between two symbols
 hc serve                 Start MCP server (stdio)
 hc init [PATH]           Marker .hc + enroll + index + register MCP + hooks
 hc reset [PATH]          Remove .hc and this project's rows from the shared DB
-hc setup                 Shared index.db + global hooks/skills (used by install.sh)
+hc setup                 Shared hc.db + global hooks/skills (used by install.sh)
 hc doctor [--json]       Diagnose binary, schema, marker, legacy indexes/
 hc doctor --fix [--yes] Apply repairs (destructive ones need --yes)
 hc migrate               Apply pending shared-schema migrations (+ backup)
@@ -166,7 +166,7 @@ hc upgrade --install --yes
 
 ## Maintenance
 
-Shared index path: `~/.local/share/hybrid-coco/index.db` (schema version in `meta`).
+Shared index path: `~/.local/share/hc/hc.db` (schema version in `meta`).
 
 | Situation | Command |
 |---|---|
@@ -176,9 +176,11 @@ Shared index path: `~/.local/share/hybrid-coco/index.db` (schema version in `met
 | Binary outdated | `hc upgrade --install --yes` |
 | Full diagnose for agents | `hc doctor --json` (skill `hc-doctor`) |
 
-Open never auto-migrates a non-empty DB. There are no down-migrations — rollback is restore from `index.db.bak.*`.
+Open never auto-migrates a non-empty DB. There are no down-migrations — rollback is restore from `hc.db.bak.*`.
 
 ## Supported languages
+
+Built-in (in-process tree-sitter):
 
 | Language | Parser |
 |---|---|
@@ -188,7 +190,27 @@ Open never auto-migrates a non-empty DB. There are no down-migrations — rollba
 | JavaScript | tree-sitter-javascript |
 | TypeScript / TSX | tree-sitter-typescript |
 
-Adding a language means implementing a parser in `internal/parsers/` (modular plugin load is a future track).
+### Language cocos (wasm/v1)
+
+Cocos live in **separate repos** (not in this tree). Anyone can publish a language pack; `hc` only hosts the contract + install/runtime:
+
+```bash
+hc coco install github.com/org/my-java-coco@v0.1.0
+hc coco install --local /path/to/my-coco   # local checkout while developing
+hc coco list
+```
+
+Contract: `coco.toml` + `wasm32/wasi` module exporting `coco_abi_version` / `coco_alloc` / `coco_free` / `coco_parse`. Release assets: `{id}-wasm32-wasi.wasm` + `coco.toml`. See [ADR-001](../.claude/context/decisions/adr-001-modular-cocos.md).
+
+Project pins (optional `hc.toml` next to `.hc`):
+
+```toml
+cocos = ["acme/java"]
+[extension_pins]
+".java" = "acme/java"
+```
+
+Flavors (e.g. `java` vs `java-springboot`) are separate coco ids with different `priority`; ties require pins.
 
 ## Design decisions
 
@@ -196,7 +218,9 @@ Adding a language means implementing a parser in `internal/parsers/` (modular pl
 
 **tree-sitter, not regex**: symbol and call extraction is grammar-aware. Call edges resolve with a precision ladder (qualifier → same-file → project).
 
-**Single Go binary**: `hc` is CLI + MCP server. No Python runtime. Distributed via GitHub Releases + `install.sh`.
+**Single Go binary**: `hc` is CLI + MCP server. No Python runtime. Distributed via GitHub Releases + `install.sh`. Extra languages load as wasm cocos (wazero), not linked into the binary.
+
+**Modular cocos**: built-ins stay in-process; external packs follow the prunesh-style install/registry UX with a `wasm/v1` ABI suited to per-file indexing.
 
 **No server process**: `hc serve` runs as a stdio MCP server launched on demand by Claude Code. There is no daemon to manage.
 

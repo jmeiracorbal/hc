@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// LatestBackup returns the newest index.db.bak.<utc> next to dbPath.
+// LatestBackup returns the newest <db>.bak.<utc> next to dbPath.
 func LatestBackup(dbPath string) (string, error) {
 	if dbPath == "" {
 		return "", fmt.Errorf("db path is required")
@@ -42,7 +42,7 @@ func LatestBackup(dbPath string) (string, error) {
 }
 
 // RestoreBackup replaces dbPath with bakPath (or LatestBackup when bakPath empty).
-// Current db is moved to index.db.pre-restore.<utc> when it exists.
+// Current db is moved to <db>.pre-restore.<utc> when it exists.
 func RestoreBackup(dbPath, bakPath string) (restoredFrom string, err error) {
 	if dbPath == "" {
 		return "", fmt.Errorf("db path is required")
