@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -15,9 +16,22 @@ const (
 	MarkerFile       = ".hc"
 	LegacyHCDir      = ".hybrid-coco"
 	IndexesDirName   = "indexes"
-	IndexFile        = "index.db"
-	SchemaVersion    = 5
+	// DBFile is the shared SQLite database under the data root.
+	DBFile = "hc.db"
+	// IndexFile is a deprecated alias of DBFile (kept for transitional call sites).
+	IndexFile = DBFile
+	// LegacySharedDBFile is the former shared DB name under the data root.
+	LegacySharedDBFile = "index.db"
+	// LegacyPerProjectDBFile is the DB name inside obsolete indexes/<id>/.
+	LegacyPerProjectDBFile = "index.db"
+	// LegacyCocosDBFile is the obsolete standalone coco registry DB.
+	LegacyCocosDBFile = "cocos.db"
+	SchemaVersion    = 6
 	SchemaVersionKey = "schema_version"
+	// DataDirName is the directory under ~/.local/share for shared state.
+	DataDirName = "hc"
+	// LegacyDataDirName is the pre-rename data root (hybrid-coco branding).
+	LegacyDataDirName = "hybrid-coco"
 )
 
 var (
@@ -96,7 +110,57 @@ func DataRoot() (string, error) {
 	if home == "" {
 		return "", fmt.Errorf("home directory is required")
 	}
-	return filepath.Join(home, ".local", "share", "hybrid-coco"), nil
+	return filepath.Join(home, ".local", "share", DataDirName), nil
+}
+
+// LegacyDataRoot is the obsolete ~/.local/share/hybrid-coco path.
+func LegacyDataRoot() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	if home == "" {
+		return "", fmt.Errorf("home directory is required")
+	}
+	return filepath.Join(home, ".local", "share", LegacyDataDirName), nil
+}
+
+// MigrateLegacyDataRoot renames ~/.local/share/hybrid-coco → ~/.local/share/hc
+// when only the legacy path exists. Errors if both exist (manual resolve required).
+func MigrateLegacyDataRoot() (migrated bool, err error) {
+	dataRootMu.Lock()
+	override := dataRoot
+	dataRootMu.Unlock()
+	if override != "" {
+		// tests use an override; never touch real home legacy paths
+		return false, nil
+	}
+	legacy, err := LegacyDataRoot()
+	if err != nil {
+		return false, err
+	}
+	current, err := DataRoot()
+	if err != nil {
+		return false, err
+	}
+	_, legErr := os.Stat(legacy)
+	_, curErr := os.Stat(current)
+	legacyExists := legErr == nil
+	currentExists := curErr == nil
+	if !legacyExists {
+		return false, nil
+	}
+	if currentExists {
+		return false, fmt.Errorf("both %s and %s exist; remove or merge manually before continuing", legacy, current)
+	}
+	parent := filepath.Dir(current)
+	if err := os.MkdirAll(parent, 0o755); err != nil {
+		return false, err
+	}
+	if err := os.Rename(legacy, current); err != nil {
+		return false, fmt.Errorf("migrate data root %s → %s: %w", legacy, current, err)
+	}
+	return true, nil
 }
 
 func CanonicalRoot(root string) (string, error) {
@@ -116,19 +180,23 @@ func RootID(canonical string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// SharedIndexPath is the single SQLite file for all enrolled projects.
+// SharedIndexPath is the single SQLite file for all enrolled projects and cocos.
 func SharedIndexPath() (string, error) {
 	root, err := DataRoot()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(root, IndexFile), nil
+	return filepath.Join(root, DBFile), nil
 }
 
 // EnsureSharedIndex creates the data root directory and returns the shared DB path.
 // Does not create the DB file; store.Open does.
 // Does not remove obsolete indexes/<id>/ — doctor/migrate handle that.
+// Migrates legacy data-root and index.db → hc.db when needed.
 func EnsureSharedIndex() (string, error) {
+	if _, err := MigrateLegacyDataRoot(); err != nil {
+		return "", err
+	}
 	root, err := DataRoot()
 	if err != nil {
 		return "", err
@@ -136,7 +204,51 @@ func EnsureSharedIndex() (string, error) {
 	if err := os.MkdirAll(root, 0o755); err != nil {
 		return "", err
 	}
-	return filepath.Join(root, IndexFile), nil
+	if _, err := MigrateLegacySharedDB(root); err != nil {
+		return "", err
+	}
+	return filepath.Join(root, DBFile), nil
+}
+
+// MigrateLegacySharedDB renames index.db → hc.db (and matching .bak.* files).
+func MigrateLegacySharedDB(root string) (migrated bool, err error) {
+	if root == "" {
+		return false, fmt.Errorf("data root is required")
+	}
+	legacy := filepath.Join(root, LegacySharedDBFile)
+	current := filepath.Join(root, DBFile)
+	_, legErr := os.Stat(legacy)
+	_, curErr := os.Stat(current)
+	legacyExists := legErr == nil
+	currentExists := curErr == nil
+	if !legacyExists {
+		return false, nil
+	}
+	if currentExists {
+		return false, fmt.Errorf("both %s and %s exist; remove or merge manually before continuing", legacy, current)
+	}
+	if err := os.Rename(legacy, current); err != nil {
+		return false, fmt.Errorf("migrate shared db %s → %s: %w", legacy, current, err)
+	}
+	// rename sidecar WAL/SHM if present next to old name (usually gone after close)
+	_ = os.Rename(legacy+"-wal", current+"-wal")
+	_ = os.Rename(legacy+"-shm", current+"-shm")
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return true, nil
+	}
+	for _, e := range entries {
+		name := e.Name()
+		if strings.HasPrefix(name, LegacySharedDBFile+".bak.") {
+			newName := DBFile + strings.TrimPrefix(name, LegacySharedDBFile)
+			_ = os.Rename(filepath.Join(root, name), filepath.Join(root, newName))
+		}
+		if strings.HasPrefix(name, LegacySharedDBFile+".pre-restore.") {
+			newName := DBFile + strings.TrimPrefix(name, LegacySharedDBFile)
+			_ = os.Rename(filepath.Join(root, name), filepath.Join(root, newName))
+		}
+	}
+	return true, nil
 }
 
 // LegacyIndexesDir is the obsolete per-project layout under the data root.
@@ -166,7 +278,7 @@ func ListLegacyIndexIDs() ([]string, error) {
 		if !e.IsDir() {
 			continue
 		}
-		dbPath := filepath.Join(dir, e.Name(), IndexFile)
+		dbPath := filepath.Join(dir, e.Name(), LegacyPerProjectDBFile)
 		if _, err := os.Stat(dbPath); err != nil {
 			continue
 		}

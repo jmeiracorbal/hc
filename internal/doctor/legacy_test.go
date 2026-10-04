@@ -33,7 +33,7 @@ func TestLegacyIndexesDetected(t *testing.T) {
 	if err := os.MkdirAll(legacy, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(legacy, config.IndexFile), []byte("x"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(legacy, config.LegacyPerProjectDBFile), []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -64,7 +64,7 @@ func TestLegacyIndexesDetected(t *testing.T) {
 	if _, err := config.EnsureSharedIndex(); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(filepath.Join(legacy, config.IndexFile)); err != nil {
+	if _, err := os.Stat(filepath.Join(legacy, config.LegacyPerProjectDBFile)); err != nil {
 		t.Fatal("EnsureSharedIndex must not purge legacy")
 	}
 

@@ -67,10 +67,10 @@ func TestImportLegacy(t *testing.T) {
 	if err := os.MkdirAll(legacyDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	legacyDB := filepath.Join(legacyDir, config.IndexFile)
+	legacyDB := filepath.Join(legacyDir, config.LegacyPerProjectDBFile)
 	seedLegacyPerProject(t, legacyDB)
 
-	shared := filepath.Join(data, config.IndexFile)
+	shared := filepath.Join(data, config.DBFile)
 	maps := migrate.LegacyMap{legacyID: projRoot}
 	res, err := migrate.ImportLegacy(shared, maps, true)
 	if err != nil {

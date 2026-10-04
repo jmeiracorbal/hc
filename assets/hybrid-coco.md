@@ -2,7 +2,7 @@
 
 Index-based navigation. Same context, fewer tokens.
 
-**Requires `hc init`** → marker `.hc` + shared index at `~/.local/share/hybrid-coco/index.db`. Without `.hc`, hooks and `hc_*` do not apply.
+**Requires `hc init`** → marker `.hc` + shared index at `~/.local/share/hc/hc.db`. Without `.hc`, hooks and `hc_*` do not apply.
 
 ## Skills (repo `skills/` → installed by `hc setup`)
 

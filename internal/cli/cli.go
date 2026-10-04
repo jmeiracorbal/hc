@@ -52,6 +52,7 @@ func NewRoot() *cobra.Command {
 	root.AddCommand(cmdMigrate())
 	root.AddCommand(cmdDoctor())
 	root.AddCommand(cmdUpgrade())
+	root.AddCommand(cmdCoco())
 	return root
 }
 
@@ -562,7 +563,7 @@ func cmdReset() *cobra.Command {
 func cmdSetup() *cobra.Command {
 	return &cobra.Command{
 		Use:   "setup",
-		Short: "Install global hooks/skills and create shared index.db",
+		Short: "Install global hooks/skills and create shared hc.db",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			home, err := os.UserHomeDir()
@@ -715,7 +716,7 @@ func cmdMigrate() *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&restoreBackup, "restore-backup", false, "Restore shared index from a .bak file")
 	cmd.Flags().StringVar(&restorePath, "backup", "", "Backup path for --restore-backup (default: latest .bak)")
-	cmd.Flags().BoolVar(&importLegacy, "import-legacy", false, "Import indexes/<id>/ into shared index.db")
+	cmd.Flags().BoolVar(&importLegacy, "import-legacy", false, "Import indexes/<id>/ into shared hc.db")
 	cmd.Flags().StringArrayVar(&mapFlags, "map", nil, "Legacy id to project root (id=/abs/path); repeatable")
 	cmd.Flags().BoolVar(&purgeLegacy, "purge-legacy", false, "Remove indexes/ after successful --import-legacy")
 	cmd.Flags().BoolVar(&yes, "yes", false, "Confirm restore or purge-legacy")
@@ -733,23 +734,29 @@ func cmdDoctor() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			report, err := doctor.Run(cwd)
-			if err != nil {
-				return err
-			}
-			if fix {
-				done, err := doctor.Fix(report, doctor.FixOpts{Yes: yes})
+				report, err := doctor.Run(cwd)
 				if err != nil {
 					return err
 				}
-				for _, id := range done {
-					fmt.Printf("Fixed: %s\n", id)
+				if fix {
+					// loop: e.g. migrate_data_root then apply_migrations on next pass
+					for i := 0; i < 5; i++ {
+						done, err := doctor.Fix(report, doctor.FixOpts{Yes: yes})
+						if err != nil {
+							return err
+						}
+						if len(done) == 0 {
+							break
+						}
+						for _, id := range done {
+							fmt.Printf("Fixed: %s\n", id)
+						}
+						report, err = doctor.Run(cwd)
+						if err != nil {
+							return err
+						}
+					}
 				}
-				report, err = doctor.Run(cwd)
-				if err != nil {
-					return err
-				}
-			}
 			if asJSON {
 				raw, err := doctor.FormatJSON(report)
 				if err != nil {
@@ -827,7 +834,15 @@ func cmdUpgrade() *cobra.Command {
 				}); err != nil {
 					return err
 				}
-				fmt.Println("Installed. Run: hc doctor")
+				fmt.Println("Installed. Running post-upgrade recovery (migrate/schema via new binary)…")
+				out, err := upgrade.RecoverAfterInstall(exe)
+				if err != nil {
+					return err
+				}
+				if strings.TrimSpace(out) != "" {
+					fmt.Println(strings.TrimSpace(out))
+				}
+				fmt.Println("Recovery done.")
 				return nil
 			}
 			if yes {

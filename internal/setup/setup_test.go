@@ -73,7 +73,7 @@ func TestInstallGlobal_Skills(t *testing.T) {
 
 func TestInstallGlobal_SkillsIdempotent(t *testing.T) {
 	home := t.TempDir()
-	config.SetDataRootForTest(filepath.Join(home, ".local", "share", "hybrid-coco"))
+	config.SetDataRootForTest(filepath.Join(home, ".local", "share", config.DataDirName))
 	t.Cleanup(func() { config.SetDataRootForTest("") })
 
 	claudeDir := filepath.Join(home, ".claude")
