@@ -1,6 +1,4 @@
-# hybrid context
-
-CLI: **`hc`**
+# Hybrid Context
 
 [![CI](https://github.com/jmeiracorbal/hc/actions/workflows/ci.yml/badge.svg)](https://github.com/jmeiracorbal/hc/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/jmeiracorbal/hc?display_name=tag)](https://github.com/jmeiracorbal/hc/releases/latest)
