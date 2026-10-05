@@ -1,4 +1,6 @@
-# hc
+# hybrid context
+
+CLI: **`hc`**
 
 [![CI](https://github.com/jmeiracorbal/hc/actions/workflows/ci.yml/badge.svg)](https://github.com/jmeiracorbal/hc/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/jmeiracorbal/hc?display_name=tag)](https://github.com/jmeiracorbal/hc/releases/latest)
@@ -46,7 +48,7 @@ Source files  ──tree-sitter / coco──►  SQLite + FTS5  ──►  CLI (
 
 1. **`hc setup`**: creates the shared DB and installs global hooks/skills/awareness (also run by `install.sh`).
 2. **`hc init`**: writes marker `.hc`, enrolls the project in the shared index, indexes the tree, registers MCP, ensures hooks.
-3. **Query CLI / MCP**: returns symbols, call graph, and file/package outlines — not whole files.
+3. **Query CLI / MCP**: returns symbols, call graph, and file/package outlines, not whole files.
 4. **Hooks**: with `.hc` present, PreToolUse suggests `hc_*` instead of blind `Read`/`Grep`; PostToolUse runs `hc update` after edits.
 5. **Cocos** (optional): install language packs (`hc coco install …`); the indexer loads them via wazero (`wasm/v1`).
 
@@ -101,7 +103,7 @@ claude plugin marketplace add jmeiracorbal/hc
 claude plugin install hybrid-coco@hybrid-coco
 ```
 
-Registers the MCP server and hooks automatically. Requires `hc` in PATH — install the binary first (Option A).
+Registers the MCP server and hooks automatically. Requires `hc` in PATH; install the binary first (Option A).
 
 **Option C: Build from source**
 
@@ -180,14 +182,14 @@ Shared index path: `~/.local/share/hc/hc.db` (schema version in `meta`). Cocos r
 
 | Situation | What happens / command |
 |---|---|
-| Schema pending after binary upgrade | **Automatic** via `hc upgrade --install --yes` (re-exec `doctor --fix`). Agents: `hc doctor --fix --json` (skill `hc-doctor`) — do not ask the user to migrate. |
+| Schema pending after binary upgrade | **Automatic** via `hc upgrade --install --yes` (re-exec `doctor --fix`). Agents: `hc doctor --fix --json` (skill `hc-doctor`). Do not ask the user to migrate. |
 | Broken / too-old DB, have `.bak` | `hc migrate --restore-backup --yes` or `hc doctor --fix --yes` |
 | Old layout `indexes/<id>/` still on disk | `hc migrate --import-legacy --map id=/abs/path` then `--purge-legacy --yes`, or `hc doctor --fix --yes` to purge only |
 | Legacy data root `~/.local/share/hybrid-coco` | Renamed automatically to `~/.local/share/hc` on first open |
 | Binary outdated | `hc upgrade --install --yes` |
 | Full diagnose for agents | `hc doctor --json` |
 
-Open never auto-migrates a non-empty DB on its own (fail-fast `ErrMigrationsPending`). That error is the signal for `doctor --fix` / post-upgrade recovery. There are no down-migrations — rollback is restore from `hc.db.bak.*`.
+Open never auto-migrates a non-empty DB on its own (fail-fast `ErrMigrationsPending`). That error is the signal for `doctor --fix` / post-upgrade recovery. There are no down-migrations; rollback is restore from `hc.db.bak.*`.
 
 ## Supported languages
 

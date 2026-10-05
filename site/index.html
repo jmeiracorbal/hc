@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#F4F7F9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0B1A22" media="(prefers-color-scheme: dark)">
+  <title>hybrid context (hc): stop feeding agents whole files</title>
+  <meta name="description" content="hybrid context (hc): local SQLite index of your repo. Agents query symbols and call graphs over MCP instead of dumping whole files. Extra languages via wasm cocos. ~88% fewer tokens on a measured mnemo suite.">
+  <link rel="canonical" href="https://jmeiracorbal.github.io/hc/">
+  <meta name="application-name" content="hc">
+  <meta name="author" content="jmeiracorbal">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="hybrid context">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://jmeiracorbal.github.io/hc/">
+  <meta property="og:title" content="hybrid context (hc): stop feeding agents whole files">
+  <meta property="og:description" content="Local SQLite index + MCP. Wasm language packs (cocos) without rebuilding the core. ~88% token savings vs rg + cat on mnemo (hc v0.1.2).">
+  <meta property="og:image" content="og/home.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="hc / hybrid context, local code index for AI agents">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="hybrid context (hc): stop feeding agents whole files">
+  <meta name="twitter:description" content="Local SQLite + MCP. Cocos for extra languages. ~88% fewer tokens on a real mnemo suite.">
+  <meta name="twitter:image" content="og/home.png">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preload" as="font" type="font/woff2" href="fonts/plus-jakarta-sans-latin-400.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="fonts/plus-jakarta-sans-latin-600.woff2" crossorigin>
+  <link rel="stylesheet" href="hc.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "hybrid context",
+    "alternateName": "hc",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "macOS, Linux",
+    "license": "https://www.apache.org/licenses/LICENSE-2.0",
+    "url": "https://jmeiracorbal.github.io/hc/",
+    "codeRepository": "https://github.com/jmeiracorbal/hc",
+    "description": "Local SQLite index of your codebase for AI agents. MCP tools instead of dumping whole files. Extra languages via wasm cocos.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+</head>
+<body>
+<main class="icon-theme">
+
+<nav class="top" aria-label="Primary">
+  <div class="nav-in">
+    <a class="logo logo-md" href="index.html">
+      <img src="images/hc.svg" alt="" width="26" height="28" decoding="async">
+      <span class="logo-word">Hybrid Context</span>
+    </a>
+    <div class="nav-links">
+      <a href="#cocos">Cocos</a>
+      <a href="#how">How it works</a>
+      <a href="#agents">Agents</a>
+      <a href="#install">Install</a>
+    </div>
+    <div class="nav-cta">
+      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileSheet" data-mobile-toggle="mobileSheet">
+        <span class="bar"></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<script type="module">
+(() => {
+  const t = document.querySelector("nav.top");
+  if (!t || t.classList.contains("no-morph")) return;
+  let e = false;
+  const n = () => { t.classList.toggle("is-floating", window.scrollY > 24); e = false; };
+  window.addEventListener("scroll", () => { if (!e) { requestAnimationFrame(n); e = true; } }, { passive: true });
+  n();
+})();
+</script>
+
+<div class="mobile-scrim" id="mobileSheetScrim" aria-hidden="true"></div>
+<aside class="mobile-sheet" id="mobileSheet" role="dialog" aria-modal="true" aria-labelledby="mobileSheetTtl" data-close-above="900" hidden>
+  <header class="mobile-sheet-head">
+    <span class="ttl" id="mobileSheetTtl">Menu</span>
+    <button class="mobile-close" type="button" aria-label="Close menu">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <path d="M3 3l10 10M13 3L3 13"></path>
+      </svg>
+    </button>
+  </header>
+  <div class="mobile-pane">
+    <nav class="mobile-list" aria-label="Primary">
+      <a href="#cocos"><span class="lbl">Cocos</span></a>
+      <a href="#how"><span class="lbl">How it works</span></a>
+      <a href="#agents"><span class="lbl">Agents</span></a>
+      <a href="#install"><span class="lbl">Install</span></a>
+      <a href="https://github.com/jmeiracorbal/hc" target="_blank" rel="noopener"><span class="lbl">GitHub</span></a>
+    </nav>
+  </div>
+</aside>
+
+<script type="module">
+(() => {
+  const sheet = document.getElementById("mobileSheet");
+  const scrim = document.getElementById("mobileSheetScrim");
+  const btn = document.getElementById("menuBtn");
+  if (!sheet || !scrim || !btn) return;
+  const close = () => {
+    sheet.hidden = true;
+    scrim.setAttribute("aria-hidden", "true");
+    btn.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("sheet-open");
+  };
+  const open = () => {
+    sheet.hidden = false;
+    scrim.setAttribute("aria-hidden", "false");
+    btn.setAttribute("aria-expanded", "true");
+    document.body.classList.add("sheet-open");
+  };
+  btn.addEventListener("click", () => (sheet.hidden ? open() : close()));
+  scrim.addEventListener("click", close);
+  sheet.querySelector(".mobile-close")?.addEventListener("click", close);
+  sheet.querySelectorAll("a").forEach((a) => a.addEventListener("click", close));
+})();
+</script>
+
+<!-- ==================== HERO ==================== -->
+<section class="hero band--cream">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <h1 class="hero-h">Stop feeding agents<br>entire <em>source files</em></h1>
+        <p class="hero-sub">
+          <b>hc</b> (hybrid context) builds a local SQLite index of your project (tree-sitter + FTS5).
+          Claude and other agents hit symbols, callers, and blast radius over MCP
+          instead of <code>cat</code>-ing half the tree into context.
+          Need a language the core doesn't ship? Drop in a <b>coco</b> (wasm pack). No Docker, no vectors, no recompile of hc itself.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-coral btn-xl" href="#install">Install</a>
+          <a class="btn btn-outline btn-xl" href="https://github.com/jmeiracorbal/hc" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </div>
+      <div class="hero-visual is-floating">
+        <div class="viz-head"><span>store_test.go · hc v0.1.2</span><span>−89.4%</span></div>
+        <div class="code-figure">
+          <div class="bar">
+            <span class="file">mnemo (Go)</span>
+            <span class="dt">tokens ≈ chars/4</span>
+          </div>
+          <pre><code><span class="lbl"># without the index</span>
+Read(…/store_test.go)      →  <b>32,531</b> tok
+
+<span class="lbl"># with hc file-context</span>
+hc file-context(…)         →   <b>3,448</b> tok</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PROOF ==================== -->
+<section class="band--peach" id="proof">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-idx">01</span>
+      <h2>Numbers from a real repo, <em>not a toy demo</em></h2>
+      <p class="sec-lead">
+        Seven queries on <a href="https://github.com/jmeiracorbal/mnemo">mnemo</a> (Go, 125 files, 1,372 symbols) with hc v0.1.2.
+        Baseline is <code>rg</code> + reading files; hc side is <code>symbol</code> / <code>query</code> / <code>file-context</code> / <code>package</code> / <code>impact</code>.
+        Total: 71,141 → 8,564 tok (<b>~88%</b>).
+      </p>
+    </div>
+    <div class="usecase-grid">
+      <article class="usecase-card">
+        <h3>Symbol lookup</h3>
+        <p><code>AddObservation</code><br>6,502 → 319 tok · <b>95.1%</b></p>
+      </article>
+      <article class="usecase-card">
+        <h3>Package outline</h3>
+        <p><code>internal/mcp</code><br>15,344 → 1,841 tok · <b>88.0%</b></p>
+      </article>
+      <article class="usecase-card">
+        <h3>Blast radius</h3>
+        <p><code>hc impact AddObservation</code><br>6,502 → 456 tok · <b>93.0%</b></p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== COCOS (differentiator) ==================== -->
+<section class="band--dark" id="cocos">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-idx">02</span>
+      <h2>Cocos: language packs that <em>aren't</em> in the binary</h2>
+      <p class="sec-lead">
+        Built-in today: Go, Python, JavaScript, TypeScript/TSX, Rust (in-process tree-sitter).
+        Other languages ship as separate wasm cocos. Install on the machine, keep one <code>hc</code> binary.
+        Official starters (<code>hc/java</code>, <code>hc/php</code>, <code>hc/csharp</code>) are regex-based reference packs, not full tree-sitter grammars.
+      </p>
+    </div>
+
+    <div class="code-feats">
+      <div class="code-feat">
+        <span class="ico" aria-hidden="true">⬡</span>
+        <div>
+          <h3>Separate git repo</h3>
+          <p>A coco is <code>coco.toml</code> plus a <code>wasm32/wasi</code> module released on GitHub. Pin with <code>github.com/org/repo@vX.Y.Z</code>.</p>
+        </div>
+      </div>
+      <div class="code-feat">
+        <span class="ico" aria-hidden="true">↻</span>
+        <div>
+          <h3>Install, then index</h3>
+          <p><code>hc coco install …</code> stores the pack under <code>~/.local/share/hc/</code> and registers it in <code>hc.db</code>. The next <code>index</code>/<code>update</code>/<code>init</code> loads it via wazero.</p>
+        </div>
+      </div>
+      <div class="code-feat">
+        <span class="ico" aria-hidden="true">≡</span>
+        <div>
+          <h3>Contract wasm/v1</h3>
+          <p>Required exports: <code>coco_abi_version</code>, <code>coco_alloc</code>, <code>coco_free</code>, <code>coco_parse</code>. Host is Go + wazero.</p>
+        </div>
+      </div>
+      <div class="code-feat">
+        <span class="ico" aria-hidden="true">⌖</span>
+        <div>
+          <h3>Project pins</h3>
+          <p>Optional <code>hc.toml</code> next to <code>.hc</code> can list coco ids and map extensions → packs so the team shares one set.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-meta mt-2">
+      <div class="code-figure">
+        <div class="bar">
+          <span class="file">shell</span>
+          <span class="dt">add a language pack</span>
+        </div>
+        <pre><code>hc coco install github.com/org/hc-java-coco@v0.1.0
+hc coco list
+hc coco uninstall hc/java
+
+<span class="lbl"># while developing a coco checkout</span>
+hc coco install --local ../official-cocos/hc-java-coco --replace</code></pre>
+      </div>
+    </div>
+
+    <div class="usecase-grid mt-2">
+      <article class="usecase-card">
+        <h3><code>hc/java</code></h3>
+        <p><code>.java</code> · official starter</p>
+      </article>
+      <article class="usecase-card">
+        <h3><code>hc/php</code></h3>
+        <p><code>.php</code> · official starter</p>
+      </article>
+      <article class="usecase-card">
+        <h3><code>hc/csharp</code></h3>
+        <p><code>.cs</code> · official starter</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== HOW IT WORKS ==================== -->
+<section class="band--cream" id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-idx">03</span>
+      <h2>It's a SQLite file on disk. <em>That's the point.</em></h2>
+      <p class="sec-lead">
+        Parsers fill <code>~/.local/share/hc/hc.db</code>. Projects opt in with a <code>.hc</code> marker.
+        You get CLI answers and an MCP server from the same index. Nothing remote to sync.
+      </p>
+    </div>
+    <div class="code-figure">
+      <div class="bar">
+        <span class="file">how it hangs together</span>
+        <span class="dt">all local</span>
+      </div>
+      <pre><code>Source files  ──tree-sitter / coco──►  SQLite + FTS5  ──►  CLI (hc)
+   (per project, .hc)                        │
+                                             │  shared index + coco registry
+                                             └──────────────►  MCP server (hc_*)
+                                                                   │
+                                                            Claude Code hooks
+                                                            block full Read/Grep
+                                                            → symbols + hc_* hints</code></pre>
+    </div>
+    <div class="code-feats mt-2">
+      <div class="code-feat">
+        <h3>Updates stay cheap</h3>
+        <p><code>hc update</code> hashes files; only the dirty ones get reparsed. Deletes get pruned.</p>
+      </div>
+      <div class="code-feat">
+        <h3>Graph before you edit</h3>
+        <p><code>explore</code>, <code>impact</code>, <code>path</code>: callers, callees, and a path between two symbols when you need it.</p>
+      </div>
+      <div class="code-feat">
+        <h3>Search that isn't vibes</h3>
+        <p>FTS5 over names, signatures, docstrings. If it isn't in the text, it won't hallucinate a hit.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== AGENTS ==================== -->
+<section class="band--palm" id="agents">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-idx">04</span>
+      <h2>Hooks that <em>block</em> the expensive Read</h2>
+      <p class="sec-lead">
+        With a <code>.hc</code> marker, PreToolUse <b>blocks</b> full-file <code>Read</code>/<code>Grep</code> and returns symbols + range hints instead
+        (ranged <code>Read</code> with offset+limit still passes). PostToolUse runs <code>hc update</code> after edits.
+      </p>
+    </div>
+    <div class="vibe">
+      <div class="vibe-copy">
+        <div class="code-feats">
+          <div class="code-feat">
+            <h3>MCP tools</h3>
+            <p><code>hc_search</code>, <code>hc_symbol</code>, <code>hc_file_context</code>, <code>hc_package</code>, <code>hc_explore</code>, <code>hc_impact</code>, <code>hc_path</code>, <code>hc_status</code>. Require <code>.hc</code> in the project cwd.</p>
+          </div>
+          <div class="code-feat">
+            <h3>Skills</h3>
+            <p><code>hc setup</code> installs <code>hc-index</code>, <code>hc-navigate</code>, <code>hc-graph</code>, and <code>hc-doctor</code>.</p>
+          </div>
+          <div class="code-feat">
+            <h3>After upgrades</h3>
+            <p><code>hc upgrade --install --yes</code> re-execs the new binary with <code>doctor --fix</code> for pending schema migrations and safe repairs.</p>
+          </div>
+        </div>
+      </div>
+      <div class="vibe-demo">
+        <div class="vibe-demo-bar">
+          <span class="fname">PreToolUse</span>
+          <span class="state"><span class="pulse" aria-hidden="true"></span>block</span>
+        </div>
+        <div class="vibe-demo-body">
+          <div class="row user"><span class="badge">agent</span><span class="msg">Read(internal/store/store.go) · whole file</span></div>
+          <div class="row ai"><span class="badge">hook</span><span class="msg">decision: block · use hc_file_context + ranged Read</span></div>
+          <div class="bar"></div>
+          <div class="row ok"><span class="badge">ok</span><span class="msg">symbols + offset/limit hints returned</span></div>
+          <div class="row log"><span class="badge">note</span><span class="msg">no .hc → hook is a no-op</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== INSTALL ==================== -->
+<section class="band--cream" id="install">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-idx">05</span>
+      <h2>Install the binary. <em>Index the project.</em></h2>
+      <p class="sec-lead">macOS and Linux, amd64/arm64. Checksummed from GitHub Releases.</p>
+    </div>
+    <div class="code-figure">
+      <div class="bar"><span class="file">install</span><button class="copy" type="button" aria-label="Copy"><span class="copy-lbl">Copy</span></button></div>
+      <pre><code>curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hc/main/install.sh | bash
+hc init</code></pre>
+    </div>
+    <p class="sec-lead mt-2">
+      <code>install.sh</code> runs <code>hc setup</code> (shared DB + hooks/skills). Then <code>hc init</code> in a project writes <code>.hc</code>, indexes, and registers MCP.
+      Extra languages later: <code>hc coco install …</code>.
+    </p>
+    <div class="section-meta">
+      <a class="btn btn-outline btn-xl" href="https://github.com/jmeiracorbal/hc#readme" target="_blank" rel="noopener">README</a>
+      <a class="btn btn-coral btn-xl" href="https://github.com/jmeiracorbal/hc/releases" target="_blank" rel="noopener">Releases</a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CTA END ==================== -->
+<section class="cta-end band--coral">
+  <div class="wrap">
+    <div class="cta-end-cute">
+      <h3>Index locally. <em>Query the graph.</em></h3>
+      <p><code>install.sh</code> → <code>hc init</code>. Add a coco when you need another language.</p>
+      <div class="btns">
+        <a class="btn btn-on-dark btn-xl" href="#install">Install hc</a>
+        <a class="btn btn-outline btn-xl" href="https://github.com/jmeiracorbal/hc" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="logo logo-sm" href="index.html">
+          <img src="images/hc.svg" alt="" width="22" height="24" decoding="async">
+          <span class="logo-word">Hybrid Context</span>
+        </a>
+        <p class="foot-tag">hybrid context · local code index for agents.</p>
+        <p class="foot-colo">Apache-2.0 · © 2026 <a href="https://github.com/jmeiracorbal">jmeiracorbal</a></p>
+      </div>
+      <div class="foot-col">
+        <div class="foot-h">On this page</div>
+        <a href="#cocos">Cocos</a>
+        <a href="#how">How it works</a>
+        <a href="#agents">Agents</a>
+        <a href="#install">Install</a>
+      </div>
+      <div class="foot-col">
+        <div class="foot-h">Elsewhere</div>
+        <a href="https://github.com/jmeiracorbal/hc" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/jmeiracorbal/hc#readme" target="_blank" rel="noopener">README</a>
+        <a href="https://github.com/jmeiracorbal/hc/releases" target="_blank" rel="noopener">Releases</a>
+        <a href="https://github.com/jmeiracorbal/hc/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</main>
+
+<script type="module">
+typeof document < "u" && !window.__hcCopyInit && (window.__hcCopyInit = true,
+document.addEventListener("click", (s) => {
+  const n = s.target;
+  if (!(n instanceof Element)) return;
+  const o = n.closest(".code-figure .copy");
+  if (!o) return;
+  const c = o.closest(".code-figure");
+  const r = c && (c.querySelector("pre code") || c.querySelector("pre"));
+  if (!r) return;
+  const i = r.innerText.replace(/\n$/, "");
+  const e = o.querySelector(".copy-lbl");
+  const a = () => {
+    o.classList.add("copied");
+    if (e) e.textContent = "Copied";
+    window.setTimeout(() => { o.classList.remove("copied"); if (e) e.textContent = "Copy"; }, 1500);
+  };
+  const l = () => {
+    o.classList.add("copy-fail");
+    if (e) e.textContent = "Copy failed";
+    window.setTimeout(() => { o.classList.remove("copy-fail"); if (e) e.textContent = "Copy"; }, 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(i).then(a).catch(l);
+  } else {
+    l();
+  }
+}));
+</script>
+
+</body>
+</html>

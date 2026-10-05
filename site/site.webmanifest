@@ -1,0 +1,17 @@
+{
+  "name": "hybrid context",
+  "short_name": "hc",
+  "description": "Local code index for AI agents. SQLite + MCP + wasm cocos.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "minimal-ui",
+  "background_color": "#F4F7F9",
+  "theme_color": "#0B1A22",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

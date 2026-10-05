@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#F4F7F9"/>
+  <g transform="translate(90, 205) scale(3.4)">
+    <ellipse cx="32" cy="34" rx="22" ry="20" fill="#0B1A22"/>
+    <path d="M18 28c6-10 22-12 28-2" stroke="#5EEAD4" stroke-width="2.2" stroke-linecap="round" opacity="0.9"/>
+    <circle cx="26" cy="32" r="2.4" fill="#5EEAD4"/>
+    <circle cx="38" cy="32" r="2.4" fill="#5EEAD4"/>
+    <circle cx="32" cy="40" r="2.4" fill="#5EEAD4"/>
+    <path d="M32 12v6" stroke="#0F766E" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M32 12c-4-1-7 2-6 5" stroke="#0F766E" stroke-width="2" stroke-linecap="round" fill="none"/>
+  </g>
+  <text x="360" y="300" font-family="Helvetica, Arial, sans-serif" font-size="72" font-weight="700" fill="#0B1A22">hc</text>
+  <text x="360" y="360" font-family="Helvetica, Arial, sans-serif" font-size="32" fill="#1A3A4A">Local code index for AI agents</text>
+  <text x="360" y="410" font-family="Helvetica, Arial, sans-serif" font-size="26" fill="#0F766E">~88% fewer tokens · wasm cocos</text>
+</svg>
