@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # hybrid-coco SessionStart hook
-# Ensures ~/.claude/hybrid-coco.md exists so Claude knows to use hc_* tools.
+# Ensures hybrid-coco.md exists under CLAUDE_CONFIG_DIR (default ~/.claude).
 # Runs once per session — no-op if already installed.
 
-CLAUDE_DIR="${HOME}/.claude"
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 AWARENESS="${CLAUDE_DIR}/hybrid-coco.md"
 CLAUDE_MD="${CLAUDE_DIR}/CLAUDE.md"
 PLUGIN_AWARENESS="${CLAUDE_PLUGIN_ROOT}/awareness/hybrid-coco.md"

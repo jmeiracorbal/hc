@@ -88,7 +88,13 @@ func InstallGlobal(claudeDir string) (Result, error) {
 	}
 	r.HooksInstalled = true
 
-	home := filepath.Dir(claudeDir)
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return r, err
+	}
+	if home == "" {
+		return r, fmt.Errorf("home directory is required")
+	}
 	skills, err := installSkills(home, claudeDir)
 	if err != nil {
 		return r, err
@@ -107,8 +113,8 @@ func InstallGlobal(claudeDir string) (Result, error) {
 	}
 	pre := asSlice(hooks["PreToolUse"])
 	post := asSlice(hooks["PostToolUse"])
-	preCmd := "~/.claude/hooks/" + hookPre
-	postCmd := "~/.claude/hooks/" + hookPost
+	preCmd := filepath.Join(hooksDir, hookPre)
+	postCmd := filepath.Join(hooksDir, hookPost)
 	patched := false
 	if !entryPresent(pre, preCmd) {
 		pre = append(pre, map[string]any{

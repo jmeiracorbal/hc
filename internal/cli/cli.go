@@ -457,13 +457,13 @@ func cmdInit() *cobra.Command {
 
 			var settingsPath string
 			var label string
-			home, err := os.UserHomeDir()
+			claudeDir, err := config.ClaudeConfigDir()
 			if err != nil {
 				return err
 			}
 			if globalConfig {
-				settingsPath = filepath.Join(home, ".claude", "settings.json")
-				label = "~/.claude/settings.json"
+				settingsPath = filepath.Join(claudeDir, "settings.json")
+				label = settingsPath
 			} else {
 				settingsPath = filepath.Join(canon, ".claude", "settings.json")
 				label = ".claude/settings.json"
@@ -478,19 +478,18 @@ func cmdInit() *cobra.Command {
 			}
 			fmt.Println()
 
-			claudeDir := filepath.Join(home, ".claude")
 			g, err := setup.InstallGlobal(claudeDir)
 			if err != nil {
 				return err
 			}
 			fmt.Println("Global Claude Code integration")
-			fmt.Println("  ✓ ~/.claude/hybrid-coco.md written")
+			fmt.Printf("  ✓ %s written\n", filepath.Join(claudeDir, "hybrid-coco.md"))
 			if g.ClaudeMDUpdated {
-				fmt.Println("  ✓ @hybrid-coco.md added to ~/.claude/CLAUDE.md")
+				fmt.Printf("  ✓ @hybrid-coco.md added to %s\n", filepath.Join(claudeDir, "CLAUDE.md"))
 			} else {
-				fmt.Println("  ✓ @hybrid-coco.md already in ~/.claude/CLAUDE.md")
+				fmt.Printf("  ✓ @hybrid-coco.md already in %s\n", filepath.Join(claudeDir, "CLAUDE.md"))
 			}
-			fmt.Println("  ✓ Hooks installed in ~/.claude/hooks/")
+			fmt.Printf("  ✓ Hooks installed in %s\n", filepath.Join(claudeDir, "hooks"))
 			if len(g.SkillsInstalled) > 0 {
 				fmt.Printf("  ✓ Skills: %s\n", strings.Join(g.SkillsInstalled, ", "))
 			}
@@ -501,7 +500,7 @@ func cmdInit() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().BoolVar(&globalConfig, "global", false, "Register in ~/.claude/settings.json instead of .claude/settings.json")
+	cmd.Flags().BoolVar(&globalConfig, "global", false, "Register in CLAUDE_CONFIG_DIR/settings.json (default ~/.claude) instead of .claude/settings.json")
 	return cmd
 }
 
@@ -566,22 +565,21 @@ func cmdSetup() *cobra.Command {
 		Short: "Install global hooks/skills and create shared hc.db",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			home, err := os.UserHomeDir()
+			claudeDir, err := config.ClaudeConfigDir()
 			if err != nil {
 				return err
 			}
-			claudeDir := filepath.Join(home, ".claude")
 			g, err := setup.InstallGlobal(claudeDir)
 			if err != nil {
 				return err
 			}
 			fmt.Println("hybrid-coco setup")
-			fmt.Println("  ✓ hooks + awareness installed")
+			fmt.Printf("  ✓ hooks + awareness installed in %s\n", claudeDir)
 			if len(g.SkillsInstalled) > 0 {
 				fmt.Printf("  ✓ skills: %s\n", strings.Join(g.SkillsInstalled, ", "))
 			}
 			if g.ClaudeMDUpdated {
-				fmt.Println("  ✓ @hybrid-coco.md added to ~/.claude/CLAUDE.md")
+				fmt.Printf("  ✓ @hybrid-coco.md added to %s\n", filepath.Join(claudeDir, "CLAUDE.md"))
 			}
 			if g.SharedIndexPath != "" {
 				fmt.Printf("  ✓ shared index: %s\n", g.SharedIndexPath)
