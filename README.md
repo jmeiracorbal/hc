@@ -82,7 +82,7 @@ Downloads the `hc` binary from GitHub Releases into `~/.local/bin`, verifies the
 Pin a version:
 
 ```bash
-curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hc/main/install.sh | HC_VERSION=v0.2.0 bash
+curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hc/main/install.sh | HC_VERSION=v0.3.0 bash
 ```
 
 Later upgrades (same machine):
