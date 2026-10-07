@@ -113,6 +113,22 @@ func DataRoot() (string, error) {
 	return filepath.Join(home, ".local", "share", DataDirName), nil
 }
 
+// ClaudeConfigDir returns Claude Code's user config directory.
+// Respects CLAUDE_CONFIG_DIR when set; otherwise ~/.claude (Claude Code default).
+func ClaudeConfigDir() (string, error) {
+	if dir := os.Getenv("CLAUDE_CONFIG_DIR"); dir != "" {
+		return dir, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	if home == "" {
+		return "", fmt.Errorf("home directory is required")
+	}
+	return filepath.Join(home, ".claude"), nil
+}
+
 // LegacyDataRoot is the obsolete ~/.local/share/hybrid-coco path.
 func LegacyDataRoot() (string, error) {
 	home, err := os.UserHomeDir()

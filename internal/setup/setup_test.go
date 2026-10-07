@@ -13,6 +13,7 @@ import (
 
 func TestInstallGlobal_Skills(t *testing.T) {
 	home := t.TempDir()
+	t.Setenv("HOME", home)
 	dataRoot := filepath.Join(home, ".local", "share", "hybrid-coco")
 	config.SetDataRootForTest(dataRoot)
 	t.Cleanup(func() { config.SetDataRootForTest("") })
@@ -73,6 +74,7 @@ func TestInstallGlobal_Skills(t *testing.T) {
 
 func TestInstallGlobal_SkillsIdempotent(t *testing.T) {
 	home := t.TempDir()
+	t.Setenv("HOME", home)
 	config.SetDataRootForTest(filepath.Join(home, ".local", "share", config.DataDirName))
 	t.Cleanup(func() { config.SetDataRootForTest("") })
 
@@ -82,5 +84,48 @@ func TestInstallGlobal_SkillsIdempotent(t *testing.T) {
 	}
 	if _, err := setup.InstallGlobal(claudeDir); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestInstallGlobal_CustomClaudeConfigDir(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	config.SetDataRootForTest(filepath.Join(home, ".local", "share", config.DataDirName))
+	t.Cleanup(func() { config.SetDataRootForTest("") })
+
+	claudeDir := filepath.Join(home, "profiles", "work", "claude")
+	r, err := setup.InstallGlobal(claudeDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !r.HooksInstalled || !r.AwarenessWritten {
+		t.Fatalf("result=%+v", r)
+	}
+
+	settingsRaw, err := os.ReadFile(filepath.Join(claudeDir, "settings.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	preHook := filepath.Join(claudeDir, "hooks", "hc-pre-tool-use.sh")
+	postHook := filepath.Join(claudeDir, "hooks", "hc-post-tool-use.sh")
+	if !strings.Contains(string(settingsRaw), preHook) {
+		t.Fatalf("settings missing absolute pre hook %s:\n%s", preHook, settingsRaw)
+	}
+	if !strings.Contains(string(settingsRaw), postHook) {
+		t.Fatalf("settings missing absolute post hook %s:\n%s", postHook, settingsRaw)
+	}
+	if strings.Contains(string(settingsRaw), "~/.claude/hooks/") {
+		t.Fatal("settings still hardcodes ~/.claude/hooks/")
+	}
+
+	for _, name := range skills.Names {
+		canon := filepath.Join(home, ".agents", "skills", name, "SKILL.md")
+		if _, err := os.Stat(canon); err != nil {
+			t.Fatalf("skills must stay under real HOME/.agents: %v", err)
+		}
+		link := filepath.Join(claudeDir, "skills", name)
+		if _, err := os.Lstat(link); err != nil {
+			t.Fatalf("skill symlink under custom claude dir: %v", err)
+		}
 	}
 }

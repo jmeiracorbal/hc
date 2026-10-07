@@ -245,6 +245,34 @@ func TestMigrateLegacySharedDB(t *testing.T) {
 	}
 }
 
+func TestClaudeConfigDir_Default(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("CLAUDE_CONFIG_DIR", "")
+	got, err := config.ClaudeConfigDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(home, ".claude")
+	if got != want {
+		t.Fatalf("got %s want %s", got, want)
+	}
+}
+
+func TestClaudeConfigDir_EnvOverride(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	override := filepath.Join(home, "profiles", "work", "claude")
+	t.Setenv("CLAUDE_CONFIG_DIR", override)
+	got, err := config.ClaudeConfigDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != override {
+		t.Fatalf("got %s want %s", got, override)
+	}
+}
+
 func TestMigrateLegacyDataRoot(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
