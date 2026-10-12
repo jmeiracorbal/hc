@@ -15,9 +15,9 @@ var AllowedSymbolKinds = map[string]struct{}{
 
 // Allowed ref kinds in the coco contract.
 var AllowedRefKinds = map[string]struct{}{
-	RefCalls:     {},
-	RefContains:  {},
-	RefImports:   {},
+	RefCalls:    {},
+	RefContains: {},
+	RefImports:  {},
 }
 
 // ValidateParseResult fails fast on contract violations.

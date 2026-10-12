@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/mcp"
-	"github.com/jmeiracorbal/hybrid-coco/internal/store"
+	"github.com/jmeiracorbal/hc/internal/mcp"
+	"github.com/jmeiracorbal/hc/internal/store"
 )
 
 func TestReadRangeHint(t *testing.T) {
@@ -80,7 +80,7 @@ func TestFormatStatusIncludesCalls(t *testing.T) {
 		CallsResolved: 3,
 		ByKind:        map[string]int{"function": 4, "class": 1},
 		LastIndexed:   1,
-	}, "/tmp/index.db")
+	}, "/tmp/hc.db")
 	if !strings.Contains(text, "Calls:") {
 		t.Fatalf("missing Calls line:\n%s", text)
 	}
@@ -105,7 +105,7 @@ func TestFormatStatusCallsByLanguage(t *testing.T) {
 		},
 		ByKind:      map[string]int{"function": 4},
 		LastIndexed: 1,
-	}, "/tmp/index.db")
+	}, "/tmp/hc.db")
 	if !strings.Contains(text, "Calls by language:") {
 		t.Fatalf("missing language breakdown:\n%s", text)
 	}

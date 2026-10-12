@@ -7,8 +7,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/migrate"
-	"github.com/jmeiracorbal/hybrid-coco/internal/parsers"
+	"github.com/jmeiracorbal/hc/internal/migrate"
+	"github.com/jmeiracorbal/hc/internal/parsers"
 
 	_ "modernc.org/sqlite"
 )

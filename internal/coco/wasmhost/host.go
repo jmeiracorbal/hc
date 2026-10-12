@@ -11,7 +11,7 @@ import (
 	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/parsers"
+	"github.com/jmeiracorbal/hc/internal/parsers"
 )
 
 const ABIVersion = 1

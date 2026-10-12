@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/migrate"
+	"github.com/jmeiracorbal/hc/internal/migrate"
 )
 
 func TestOpen_PendingMigrations(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "index.db")
+	path := filepath.Join(t.TempDir(), "hc.db")
 	db, err := migrate.OpenDB(path)
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +57,7 @@ INSERT INTO projects (id, root, enrolled_at) VALUES ('p1', '/r', 1);
 }
 
 func TestOpen_EmptyBaseline(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "index.db")
+	path := filepath.Join(t.TempDir(), "hc.db")
 	st, err := Open(path)
 	if err != nil {
 		t.Fatal(err)

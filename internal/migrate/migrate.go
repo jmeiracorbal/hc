@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
+	"github.com/jmeiracorbal/hc/internal/config"
 
 	_ "modernc.org/sqlite"
 )

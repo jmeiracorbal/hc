@@ -5,11 +5,11 @@ import (
 	"fmt"
 )
 
-//go:embed hybrid-coco.md hooks/*
+//go:embed hc.md hooks/*
 var fsData embed.FS
 
 func AwarenessMD() ([]byte, error) {
-	return fsData.ReadFile("hybrid-coco.md")
+	return fsData.ReadFile("hc.md")
 }
 
 func Hook(name string) ([]byte, error) {

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/upgrade"
+	"github.com/jmeiracorbal/hc/internal/upgrade"
 )
 
 func TestInstall_ChecksumOK(t *testing.T) {

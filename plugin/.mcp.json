@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "hybrid-coco": {
+    "hc": {
       "command": "hc",
       "args": ["serve"]
     }

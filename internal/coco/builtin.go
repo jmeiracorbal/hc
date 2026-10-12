@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/parsers"
+	"github.com/jmeiracorbal/hc/internal/parsers"
 )
 
 // builtin wraps a tree-sitter Parser as a Coco.
@@ -16,10 +16,10 @@ type builtin struct {
 	parser     parsers.Parser
 }
 
-func (b *builtin) ID() string               { return b.id }
-func (b *builtin) Language() string         { return b.language }
-func (b *builtin) Extensions() []string     { return append([]string(nil), b.extensions...) }
-func (b *builtin) Priority() int            { return b.priority }
+func (b *builtin) ID() string           { return b.id }
+func (b *builtin) Language() string     { return b.language }
+func (b *builtin) Extensions() []string { return append([]string(nil), b.extensions...) }
+func (b *builtin) Priority() int        { return b.priority }
 func (b *builtin) Parse(source []byte, path string) (parsers.ParseResult, error) {
 	return b.parser.Parse(source, path), nil
 }

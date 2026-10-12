@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
-	"github.com/jmeiracorbal/hybrid-coco/internal/doctor"
-	"github.com/jmeiracorbal/hybrid-coco/internal/store"
+	"github.com/jmeiracorbal/hc/internal/config"
+	"github.com/jmeiracorbal/hc/internal/doctor"
+	"github.com/jmeiracorbal/hc/internal/store"
 )
 
 func TestReportJSONFields(t *testing.T) {
@@ -45,7 +45,7 @@ func TestReportJSONFields(t *testing.T) {
 	if err := json.Unmarshal(raw, &m); err != nil {
 		t.Fatal(err)
 	}
-	for _, key := range []string{"binary", "schema", "db", "marker", "projects", "legacy", "repairs_available", "healthy"} {
+	for _, key := range []string{"binary", "schema", "db", "marker", "projects", "repairs_available", "healthy"} {
 		if _, ok := m[key]; !ok {
 			t.Fatalf("missing json field %q in %s", key, raw)
 		}

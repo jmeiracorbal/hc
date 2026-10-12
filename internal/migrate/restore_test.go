@@ -5,12 +5,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/migrate"
+	"github.com/jmeiracorbal/hc/internal/migrate"
 )
 
 func TestRestoreBackupRoundTrip(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "index.db")
+	path := filepath.Join(dir, "hc.db")
 	db := openRaw(t, path)
 	if _, err := migrate.ApplyPending(db); err != nil {
 		t.Fatal(err)
@@ -62,7 +62,7 @@ func TestRestoreBackupRoundTrip(t *testing.T) {
 
 func TestLatestBackup(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "index.db")
+	path := filepath.Join(dir, "hc.db")
 	if err := os.WriteFile(path, []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}

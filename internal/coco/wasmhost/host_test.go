@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco"
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco/wasmhost"
+	"github.com/jmeiracorbal/hc/internal/coco"
+	"github.com/jmeiracorbal/hc/internal/coco/wasmhost"
 )
 
 func TestMiniCocoParse(t *testing.T) {

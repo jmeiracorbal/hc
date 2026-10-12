@@ -1,4 +1,4 @@
-# hybrid-coco — Local Code Intelligence
+# hc (hyper context) — Local Code Intelligence
 
 Index-based navigation. Same context, fewer tokens.
 
@@ -6,14 +6,14 @@ Index-based navigation. Same context, fewer tokens.
 
 ## Skills (repo `skills/` → installed by `hc setup`)
 
-Installed globally to `~/.agents/skills/` and symlinked in `~/.claude/skills/`:
+Installed globally to `~/.agents/skills/` and symlinked in `$CLAUDE_CONFIG_DIR/skills/` (Claude Code default: `~/.claude/skills/`):
 
 | Skill | When |
 |---|---|
 | `hc-navigate` | ALWAYS with `.hc` — prefer `hc_*` over blind Read/Grep |
 | `hc-graph` | Callers, blast radius, call path before edit |
 | `hc-index` | Missing marker, version mismatch, stale/empty index |
-| `hc-doctor` | Migrations pending, schema errors, binary outdated, legacy indexes/, post-upgrade repair |
+| `hc-doctor` | Migrations pending, schema errors, binary outdated, post-upgrade repair |
 
 ## Quick tree
 

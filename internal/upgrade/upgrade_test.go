@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/upgrade"
+	"github.com/jmeiracorbal/hc/internal/upgrade"
 )
 
 func TestLatestRelease_HTTPTest(t *testing.T) {

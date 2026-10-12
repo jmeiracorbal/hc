@@ -1,4 +1,4 @@
-module github.com/jmeiracorbal/hybrid-coco
+module github.com/jmeiracorbal/hc
 
 go 1.26.0
 

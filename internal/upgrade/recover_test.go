@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/upgrade"
+	"github.com/jmeiracorbal/hc/internal/upgrade"
 )
 
 func TestRecoverAfterInstallRequiresExe(t *testing.T) {

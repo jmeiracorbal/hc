@@ -3,7 +3,7 @@ package coco
 import (
 	"fmt"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/parsers"
+	"github.com/jmeiracorbal/hc/internal/parsers"
 )
 
 // ContractWASM is the only external coco transport in v1.
@@ -26,8 +26,8 @@ type Coco interface {
 
 // Pins selects cocos for a project (from hc.toml).
 type Pins struct {
-	Cocos          []string          // preferred coco ids (order = preference)
-	ExtensionPins  map[string]string // ".java" -> "acme/java-springboot"
+	Cocos         []string          // preferred coco ids (order = preference)
+	ExtensionPins map[string]string // ".java" -> "acme/java-springboot"
 }
 
 // ParseAndValidate runs coco.Parse and enforces the contract.

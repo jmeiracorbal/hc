@@ -1,5 +1,5 @@
 {
-  "name": "hybrid context",
+  "name": "hyper context",
   "short_name": "hc",
   "description": "Local code index for AI agents. SQLite + MCP + wasm cocos.",
   "start_url": "./",

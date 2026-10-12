@@ -5,7 +5,7 @@ description: ALWAYS ACTIVE when .hc exists — prefer hc_* MCP tools over blind 
 
 # hc-navigate
 
-Use hybrid-coco MCP tools for deterministic code navigation. Index once, query always.
+Use hc MCP tools for deterministic code navigation. Index once, query always.
 
 ## Gate
 

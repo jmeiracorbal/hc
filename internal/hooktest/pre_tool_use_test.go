@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
-	"github.com/jmeiracorbal/hybrid-coco/internal/indexer"
-	"github.com/jmeiracorbal/hybrid-coco/internal/store"
+	"github.com/jmeiracorbal/hc/internal/config"
+	"github.com/jmeiracorbal/hc/internal/indexer"
+	"github.com/jmeiracorbal/hc/internal/store"
 )
 
 func TestPreToolUseAllowsRangedRead(t *testing.T) {

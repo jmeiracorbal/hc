@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/assets"
-	"github.com/jmeiracorbal/hybrid-coco/skills"
+	"github.com/jmeiracorbal/hc/assets"
+	"github.com/jmeiracorbal/hc/skills"
 )
 
 func TestAwarenessMentionsSkills(t *testing.T) {

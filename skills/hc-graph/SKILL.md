@@ -5,7 +5,7 @@ description: Use when you need callers, callees, blast radius, or a call path be
 
 # hc-graph
 
-Structural call graph from the hybrid-coco index (static AST edges — not runtime). Independent from **hc-navigate**; use navigate for file/dir/search first when you do not yet know the symbol name.
+Structural call graph from the hc index (static AST edges — not runtime). Independent from **hc-navigate**; use navigate for file/dir/search first when you do not yet know the symbol name.
 
 ## Gate
 

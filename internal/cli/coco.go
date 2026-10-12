@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco"
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco/install"
+	"github.com/jmeiracorbal/hc/internal/coco"
+	"github.com/jmeiracorbal/hc/internal/coco/install"
 )
 
 func cmdCoco() *cobra.Command {

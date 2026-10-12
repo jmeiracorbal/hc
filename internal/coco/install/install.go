@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco/manifest"
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco/registry"
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco/wasmhost"
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
+	"github.com/jmeiracorbal/hc/internal/coco/manifest"
+	"github.com/jmeiracorbal/hc/internal/coco/registry"
+	"github.com/jmeiracorbal/hc/internal/coco/wasmhost"
+	"github.com/jmeiracorbal/hc/internal/config"
 )
 
 // Ref is github.com/owner/repo@version

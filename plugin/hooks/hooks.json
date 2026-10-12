@@ -1,5 +1,5 @@
 {
-  "description": "hybrid-coco hooks: suggest hc_* tools on Read/Grep, keep index fresh on Write/Edit",
+  "description": "hc hooks: suggest hc_* tools on Read/Grep, keep index fresh on Write/Edit",
   "hooks": {
     "SessionStart": [
       {
