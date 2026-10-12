@@ -1,11 +1,11 @@
 ---
 name: hc-index
-description: Use when .hc is missing, hc version mismatches the marker, the index is stale/empty, or first-time hybrid-coco setup is needed. Covers hc init, index, update, status, reset, setup.
+description: Use when .hc is missing, hc version mismatches the marker, the index is stale/empty, or first-time hc setup is needed. Covers hc init, index, update, status, reset, setup.
 ---
 
 # hc-index
 
-Project index lifecycle for hybrid-coco. Independent from **hc-navigate** / **hc-graph**; hand off to those skills once `.hc` exists and the index is healthy.
+Project index lifecycle for hc. Independent from **hc-navigate** / **hc-graph**; hand off to those skills once `.hc` exists and the index is healthy.
 
 ## Model
 
@@ -65,7 +65,7 @@ hc reset .            # if .hc still present
 hc init .
 ```
 
-Do not hand-edit SQLite. Do not recreate `.hybrid-coco/` in-repo (legacy; `hc init` removes it if present).
+Do not hand-edit SQLite.
 
 ## After index is healthy
 

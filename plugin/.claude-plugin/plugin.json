@@ -1,5 +1,5 @@
 {
-  "name": "hybrid-coco",
+  "name": "hc",
   "description": "Deterministic code navigation via local SQLite index. Use hc_* MCP tools instead of reading files.",
   "version": "0.3.0",
   "author": {

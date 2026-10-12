@@ -9,9 +9,9 @@ import (
 
 	mcpgo "github.com/mark3labs/mcp-go/mcp"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
-	"github.com/jmeiracorbal/hybrid-coco/internal/indexer"
-	"github.com/jmeiracorbal/hybrid-coco/internal/store"
+	"github.com/jmeiracorbal/hc/internal/config"
+	"github.com/jmeiracorbal/hc/internal/indexer"
+	"github.com/jmeiracorbal/hc/internal/store"
 )
 
 func TestOpenProjectStore_RequiresMarker(t *testing.T) {

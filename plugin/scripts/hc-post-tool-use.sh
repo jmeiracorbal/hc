@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# hybrid-coco PostToolUse hook — keeps index fresh after file writes (requires .hc)
+# hc PostToolUse hook — keeps index fresh after file writes (requires .hc)
 
 command -v jq &>/dev/null || exit 0
 command -v hc &>/dev/null || exit 0

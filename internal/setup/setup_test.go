@@ -6,15 +6,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
-	"github.com/jmeiracorbal/hybrid-coco/internal/setup"
-	"github.com/jmeiracorbal/hybrid-coco/skills"
+	"github.com/jmeiracorbal/hc/internal/config"
+	"github.com/jmeiracorbal/hc/internal/setup"
+	"github.com/jmeiracorbal/hc/skills"
 )
 
 func TestInstallGlobal_Skills(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	dataRoot := filepath.Join(home, ".local", "share", "hybrid-coco")
+	dataRoot := filepath.Join(home, ".local", "share", "hc")
 	config.SetDataRootForTest(dataRoot)
 	t.Cleanup(func() { config.SetDataRootForTest("") })
 
@@ -32,12 +32,12 @@ func TestInstallGlobal_Skills(t *testing.T) {
 	if r.SharedIndexPath == "" {
 		t.Fatal("SharedIndexPath empty")
 	}
-	wantDB := filepath.Join(dataRoot, config.IndexFile)
+	wantDB := filepath.Join(dataRoot, config.DBFile)
 	if r.SharedIndexPath != wantDB {
 		t.Fatalf("SharedIndexPath=%s want %s", r.SharedIndexPath, wantDB)
 	}
 	if _, err := os.Stat(r.SharedIndexPath); err != nil {
-		t.Fatalf("shared index.db missing: %v", err)
+		t.Fatalf("shared hc.db missing: %v", err)
 	}
 
 	for _, name := range skills.Names {

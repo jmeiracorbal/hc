@@ -3,7 +3,7 @@ package coco
 import (
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/parsers"
+	"github.com/jmeiracorbal/hc/internal/parsers"
 )
 
 type stubCoco struct {

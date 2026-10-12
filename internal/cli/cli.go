@@ -9,14 +9,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
-	"github.com/jmeiracorbal/hybrid-coco/internal/doctor"
-	"github.com/jmeiracorbal/hybrid-coco/internal/indexer"
-	hcpmcp "github.com/jmeiracorbal/hybrid-coco/internal/mcp"
-	"github.com/jmeiracorbal/hybrid-coco/internal/migrate"
-	"github.com/jmeiracorbal/hybrid-coco/internal/setup"
-	"github.com/jmeiracorbal/hybrid-coco/internal/store"
-	"github.com/jmeiracorbal/hybrid-coco/internal/upgrade"
+	"github.com/jmeiracorbal/hc/internal/config"
+	"github.com/jmeiracorbal/hc/internal/doctor"
+	"github.com/jmeiracorbal/hc/internal/indexer"
+	hcpmcp "github.com/jmeiracorbal/hc/internal/mcp"
+	"github.com/jmeiracorbal/hc/internal/migrate"
+	"github.com/jmeiracorbal/hc/internal/setup"
+	"github.com/jmeiracorbal/hc/internal/store"
+	"github.com/jmeiracorbal/hc/internal/upgrade"
 )
 
 var version = "dev"
@@ -29,7 +29,7 @@ func SetVersion(v string) {
 func NewRoot() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "hc",
-		Short:         "hybrid-coco — local code intelligence",
+		Short:         "hc (hyper context) — local code intelligence",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -404,21 +404,12 @@ func cmdInit() *cobra.Command {
 				return err
 			}
 
-			fmt.Println("hybrid-coco init")
+			fmt.Println("hc init")
 			fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-
-			legacy := filepath.Join(abs, config.LegacyHCDir)
-			hadLegacy := false
-			if st, err := os.Stat(legacy); err == nil && st.IsDir() {
-				hadLegacy = true
-			}
 
 			canon, id, dbPath, err := config.InitProject(abs)
 			if err != nil {
 				return err
-			}
-			if hadLegacy {
-				fmt.Println("  ✓ removed legacy .hybrid-coco/")
 			}
 			fmt.Printf("  ✓ marker %s (hc %s)\n", filepath.Join(canon, config.MarkerFile), config.CoreVersion())
 
@@ -483,11 +474,11 @@ func cmdInit() *cobra.Command {
 				return err
 			}
 			fmt.Println("Global Claude Code integration")
-			fmt.Printf("  ✓ %s written\n", filepath.Join(claudeDir, "hybrid-coco.md"))
+			fmt.Printf("  ✓ %s written\n", filepath.Join(claudeDir, "hc.md"))
 			if g.ClaudeMDUpdated {
-				fmt.Printf("  ✓ @hybrid-coco.md added to %s\n", filepath.Join(claudeDir, "CLAUDE.md"))
+				fmt.Printf("  ✓ @hc.md added to %s\n", filepath.Join(claudeDir, "CLAUDE.md"))
 			} else {
-				fmt.Printf("  ✓ @hybrid-coco.md already in %s\n", filepath.Join(claudeDir, "CLAUDE.md"))
+				fmt.Printf("  ✓ @hc.md already in %s\n", filepath.Join(claudeDir, "CLAUDE.md"))
 			}
 			fmt.Printf("  ✓ Hooks installed in %s\n", filepath.Join(claudeDir, "hooks"))
 			if len(g.SkillsInstalled) > 0 {
@@ -521,7 +512,7 @@ func cmdReset() *cobra.Command {
 					if rerr != nil && !errors.Is(rerr, config.ErrMarkerNotFound) {
 						return rerr
 					}
-					fmt.Printf("No .hc marker at %s (legacy cleaned if present).\n", abs)
+					fmt.Printf("No .hc marker at %s.\n", abs)
 					return nil
 				}
 				return err
@@ -573,13 +564,13 @@ func cmdSetup() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println("hybrid-coco setup")
+			fmt.Println("hc setup")
 			fmt.Printf("  ✓ hooks + awareness installed in %s\n", claudeDir)
 			if len(g.SkillsInstalled) > 0 {
 				fmt.Printf("  ✓ skills: %s\n", strings.Join(g.SkillsInstalled, ", "))
 			}
 			if g.ClaudeMDUpdated {
-				fmt.Printf("  ✓ @hybrid-coco.md added to %s\n", filepath.Join(claudeDir, "CLAUDE.md"))
+				fmt.Printf("  ✓ @hc.md added to %s\n", filepath.Join(claudeDir, "CLAUDE.md"))
 			}
 			if g.SharedIndexPath != "" {
 				fmt.Printf("  ✓ shared index: %s\n", g.SharedIndexPath)
@@ -594,27 +585,13 @@ func cmdMigrate() *cobra.Command {
 	var (
 		restoreBackup bool
 		restorePath   string
-		importLegacy  bool
-		mapFlags      []string
-		purgeLegacy   bool
 		yes           bool
 	)
 	cmd := &cobra.Command{
 		Use:   "migrate",
-		Short: "Apply pending schema migrations, restore backup, or import legacy indexes",
+		Short: "Apply pending schema migrations or restore backup",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			modes := 0
-			if restoreBackup {
-				modes++
-			}
-			if importLegacy {
-				modes++
-			}
-			if modes > 1 {
-				return fmt.Errorf("use only one of --restore-backup or --import-legacy")
-			}
-
 			dbPath, err := config.SharedIndexPath()
 			if err != nil {
 				return err
@@ -629,44 +606,6 @@ func cmdMigrate() *cobra.Command {
 					return err
 				}
 				fmt.Printf("Restored %s from %s\n", dbPath, from)
-				return nil
-			}
-
-			if importLegacy {
-				ids, err := config.ListLegacyIndexIDs()
-				if err != nil {
-					return err
-				}
-				if len(mapFlags) == 0 {
-					if len(ids) == 0 {
-						return fmt.Errorf("no legacy indexes/<id>/index.db found")
-					}
-					fmt.Println("Legacy index ids (pass --map id=/abs/path to import):")
-					for _, id := range ids {
-						fmt.Printf("  %s\n", id)
-					}
-					return fmt.Errorf("--map is required")
-				}
-				maps, err := migrate.ParseLegacyMaps(mapFlags)
-				if err != nil {
-					return err
-				}
-				if purgeLegacy && !yes {
-					return fmt.Errorf("--purge-legacy requires --yes")
-				}
-				res, err := migrate.ImportLegacy(dbPath, maps, purgeLegacy)
-				if err != nil {
-					return err
-				}
-				for _, id := range res.Imported {
-					fmt.Printf("Imported: %s\n", id)
-				}
-				for _, id := range res.Skipped {
-					fmt.Printf("Skipped:  %s\n", id)
-				}
-				if res.Purged {
-					fmt.Println("Purged indexes/")
-				}
 				return nil
 			}
 
@@ -714,10 +653,7 @@ func cmdMigrate() *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&restoreBackup, "restore-backup", false, "Restore shared index from a .bak file")
 	cmd.Flags().StringVar(&restorePath, "backup", "", "Backup path for --restore-backup (default: latest .bak)")
-	cmd.Flags().BoolVar(&importLegacy, "import-legacy", false, "Import indexes/<id>/ into shared hc.db")
-	cmd.Flags().StringArrayVar(&mapFlags, "map", nil, "Legacy id to project root (id=/abs/path); repeatable")
-	cmd.Flags().BoolVar(&purgeLegacy, "purge-legacy", false, "Remove indexes/ after successful --import-legacy")
-	cmd.Flags().BoolVar(&yes, "yes", false, "Confirm restore or purge-legacy")
+	cmd.Flags().BoolVar(&yes, "yes", false, "Confirm restore")
 	return cmd
 }
 
@@ -732,29 +668,29 @@ func cmdDoctor() *cobra.Command {
 			if err != nil {
 				return err
 			}
-				report, err := doctor.Run(cwd)
-				if err != nil {
-					return err
-				}
-				if fix {
-					// loop: e.g. migrate_data_root then apply_migrations on next pass
-					for i := 0; i < 5; i++ {
-						done, err := doctor.Fix(report, doctor.FixOpts{Yes: yes})
-						if err != nil {
-							return err
-						}
-						if len(done) == 0 {
-							break
-						}
-						for _, id := range done {
-							fmt.Printf("Fixed: %s\n", id)
-						}
-						report, err = doctor.Run(cwd)
-						if err != nil {
-							return err
-						}
+			report, err := doctor.Run(cwd)
+			if err != nil {
+				return err
+			}
+			if fix {
+				// loop: a repair can unlock another on the next pass
+				for i := 0; i < 5; i++ {
+					done, err := doctor.Fix(report, doctor.FixOpts{Yes: yes})
+					if err != nil {
+						return err
+					}
+					if len(done) == 0 {
+						break
+					}
+					for _, id := range done {
+						fmt.Printf("Fixed: %s\n", id)
+					}
+					report, err = doctor.Run(cwd)
+					if err != nil {
+						return err
 					}
 				}
+			}
 			if asJSON {
 				raw, err := doctor.FormatJSON(report)
 				if err != nil {
@@ -769,7 +705,7 @@ func cmdDoctor() *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&asJSON, "json", false, "Emit JSON report")
 	cmd.Flags().BoolVar(&fix, "fix", false, "Apply safe repairs")
-	cmd.Flags().BoolVar(&yes, "yes", false, "Confirm destructive repairs (recreate/purge/restore)")
+	cmd.Flags().BoolVar(&yes, "yes", false, "Confirm destructive repairs (recreate/restore)")
 	return cmd
 }
 

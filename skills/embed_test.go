@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/skills"
+	"github.com/jmeiracorbal/hc/skills"
 )
 
 var (

@@ -14,10 +14,10 @@ import (
 
 	ignore "github.com/sabhiram/go-gitignore"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco"
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
-	"github.com/jmeiracorbal/hybrid-coco/internal/parsers"
-	"github.com/jmeiracorbal/hybrid-coco/internal/store"
+	"github.com/jmeiracorbal/hc/internal/coco"
+	"github.com/jmeiracorbal/hc/internal/config"
+	"github.com/jmeiracorbal/hc/internal/parsers"
+	"github.com/jmeiracorbal/hc/internal/store"
 )
 
 const binaryCheckBytes = 512

@@ -1,4 +1,4 @@
-# Hybrid Context
+# Hyper Context
 
 [![CI](https://github.com/jmeiracorbal/hc/actions/workflows/ci.yml/badge.svg)](https://github.com/jmeiracorbal/hc/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/jmeiracorbal/hc?display_name=tag)](https://github.com/jmeiracorbal/hc/releases/latest)
@@ -98,7 +98,7 @@ After `--install`, hc re-executes the **new** binary with `hc doctor --fix` so p
 
 ```bash
 claude plugin marketplace add jmeiracorbal/hc
-claude plugin install hybrid-coco@hybrid-coco
+claude plugin install hc@hc
 ```
 
 Registers the MCP server and hooks automatically. Requires `hc` in PATH; install the binary first (Option A).
@@ -124,7 +124,7 @@ hc init
 - Enrolls the project in the shared index at `~/.local/share/hc/hc.db`
 - Indexes the tree (tree-sitter / installed cocos, SHA-256 incremental)
 - Registers the MCP server in `.claude/settings.json`
-- Ensures global hooks/skills under `~/.claude/`
+- Ensures global hooks/skills under `$CLAUDE_CONFIG_DIR` (Claude Code default: `~/.claude`)
 
 Restart Claude Code to activate.
 
@@ -164,11 +164,10 @@ hc coco install <ref>    Install coco from github.com/org/repo@vX.Y.Z
 hc coco install --local DIR [--replace]
 hc coco list             Built-ins + installed wasm cocos
 hc coco uninstall <ID>   Remove an installed coco (e.g. hc/java)
-hc doctor [--json]       Diagnose binary, schema, marker, legacy, cocos
+hc doctor [--json]       Diagnose binary, schema, marker, cocos
 hc doctor --fix [--yes] Safe auto-recovery (destructive repairs need --yes)
 hc migrate               Apply pending shared-schema migrations (+ backup)
 hc migrate --restore-backup --yes [--backup PATH]
-hc migrate --import-legacy --map id=/abs/path [--purge-legacy --yes]
 hc upgrade               Compare running binary vs GitHub latest
 hc upgrade --yes         Print install.sh hint
 hc upgrade --install --yes
@@ -182,8 +181,6 @@ Shared index path: `~/.local/share/hc/hc.db` (schema version in `meta`). Cocos r
 |---|---|
 | Schema pending after binary upgrade | **Automatic** via `hc upgrade --install --yes` (re-exec `doctor --fix`). Agents: `hc doctor --fix --json` (skill `hc-doctor`). Do not ask the user to migrate. |
 | Broken / too-old DB, have `.bak` | `hc migrate --restore-backup --yes` or `hc doctor --fix --yes` |
-| Old layout `indexes/<id>/` still on disk | `hc migrate --import-legacy --map id=/abs/path` then `--purge-legacy --yes`, or `hc doctor --fix --yes` to purge only |
-| Legacy data root `~/.local/share/hybrid-coco` | Renamed automatically to `~/.local/share/hc` on first open |
 | Binary outdated | `hc upgrade --install --yes` |
 | Full diagnose for agents | `hc doctor --json` |
 

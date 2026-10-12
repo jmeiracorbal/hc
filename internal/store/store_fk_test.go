@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/parsers"
+	"github.com/jmeiracorbal/hc/internal/parsers"
 )
 
 func openTestStore(t *testing.T) *Store {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "index.db")
+	path := filepath.Join(t.TempDir(), "hc.db")
 	admin, err := Open(path)
 	if err != nil {
 		t.Fatal(err)
@@ -186,7 +186,7 @@ func TestFK_DeleteSymbolCleansFTS(t *testing.T) {
 }
 
 func TestOpenForProject_NotEnrolled(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "index.db")
+	path := filepath.Join(t.TempDir(), "hc.db")
 	admin, err := Open(path)
 	if err != nil {
 		t.Fatal(err)
@@ -201,7 +201,7 @@ func TestOpenForProject_NotEnrolled(t *testing.T) {
 }
 
 func TestTwoProjectIsolation(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "index.db")
+	path := filepath.Join(t.TempDir(), "hc.db")
 	admin, err := Open(path)
 	if err != nil {
 		t.Fatal(err)

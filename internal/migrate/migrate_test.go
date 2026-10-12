@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/migrate"
+	"github.com/jmeiracorbal/hc/internal/migrate"
 
 	_ "modernc.org/sqlite"
 )
@@ -91,7 +91,7 @@ func hasToQualifier(t *testing.T, db *sql.DB) bool {
 }
 
 func TestApplyPending_V4ToV5(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "index.db")
+	path := filepath.Join(t.TempDir(), "hc.db")
 	db := openRaw(t, path)
 	seedV4(t, db)
 
@@ -133,7 +133,7 @@ func TestApplyPending_V4ToV5(t *testing.T) {
 }
 
 func TestApplyPending_V5Noop(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "index.db")
+	path := filepath.Join(t.TempDir(), "hc.db")
 	db := openRaw(t, path)
 	if _, err := migrate.ApplyPending(db); err != nil {
 		t.Fatal(err)
@@ -151,7 +151,7 @@ func TestApplyPending_V5Noop(t *testing.T) {
 }
 
 func TestPending_SchemaAhead(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "index.db")
+	path := filepath.Join(t.TempDir(), "hc.db")
 	db := openRaw(t, path)
 	if _, err := migrate.ApplyPending(db); err != nil {
 		t.Fatal(err)
@@ -173,7 +173,7 @@ func TestPending_SchemaAhead(t *testing.T) {
 }
 
 func TestCheckReady_PendingV4(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "index.db")
+	path := filepath.Join(t.TempDir(), "hc.db")
 	db := openRaw(t, path)
 	seedV4(t, db)
 	err := migrate.CheckReady(db)
@@ -187,7 +187,7 @@ func TestCheckReady_PendingV4(t *testing.T) {
 }
 
 func TestBackup(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "index.db")
+	path := filepath.Join(t.TempDir(), "hc.db")
 	db := openRaw(t, path)
 	if _, err := migrate.ApplyPending(db); err != nil {
 		t.Fatal(err)

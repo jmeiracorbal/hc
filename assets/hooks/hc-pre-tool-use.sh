@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# hybrid-coco PreToolUse hook — blocking
+# hc PreToolUse hook — blocking
 # Full Read/Grep on indexed content → hc data (only if .hc marker present).
 # Ranged Read (offset+limit both set) is allowed through.
 
@@ -58,7 +58,7 @@ if [ "$TOOL_NAME" = "Read" ]; then
     *"not found in index"*) exit 0 ;;
   esac
 
-  REASON=$(printf '[hybrid-coco] Full Read blocked for %s. Symbols + range hints:\n\n%s\n\nTo read a body: Read with BOTH offset and limit from the hints (e.g. offset=10 limit=5). Or hc_explore / hc_package.' \
+  REASON=$(printf '[hc] Full Read blocked for %s. Symbols + range hints:\n\n%s\n\nTo read a body: Read with BOTH offset and limit from the hints (e.g. offset=10 limit=5). Or hc_explore / hc_package.' \
     "$REL_PATH" "$HC_OUTPUT" | jq -Rs .)
   printf '{"decision":"block","reason":%s}\n' "$REASON"
   exit 0
@@ -78,7 +78,7 @@ if [ "$TOOL_NAME" = "Grep" ]; then
     "No results.") exit 0 ;;
   esac
 
-  REASON=$(printf '[hybrid-coco] Search results for "%s":\n\n%s\n\nUse hc_search for further queries.' \
+  REASON=$(printf '[hc] Search results for "%s":\n\n%s\n\nUse hc_search for further queries.' \
     "$PATTERN" "$HC_OUTPUT" | jq -Rs .)
   printf '{"decision":"block","reason":%s}\n' "$REASON"
   exit 0

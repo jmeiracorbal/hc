@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-// legacy language map kept for GetParser(language) callers that pass a language key.
+// Built-in language map used by DetectLanguage and GetParser(language).
 var (
 	parserMu sync.Mutex
 	parsers  = map[string]Parser{}

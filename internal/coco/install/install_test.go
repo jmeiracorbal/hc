@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco/install"
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
+	"github.com/jmeiracorbal/hc/internal/coco/install"
+	"github.com/jmeiracorbal/hc/internal/config"
 )
 
 func TestFromLocalMiniCoco(t *testing.T) {

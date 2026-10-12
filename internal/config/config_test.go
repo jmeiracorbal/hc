@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
+	"github.com/jmeiracorbal/hc/internal/config"
 )
 
 func withDataRoot(t *testing.T) string {
@@ -39,7 +39,7 @@ func TestInitAndResolve(t *testing.T) {
 	if st, err := os.Stat(data); err != nil || !st.IsDir() {
 		t.Fatalf("data root missing: %v", err)
 	}
-	wantDB := filepath.Join(data, config.IndexFile)
+	wantDB := filepath.Join(data, config.DBFile)
 	if dbPath != wantDB {
 		t.Fatalf("dbPath=%s want %s", dbPath, wantDB)
 	}
@@ -91,51 +91,6 @@ func TestPathChanged(t *testing.T) {
 	}
 }
 
-func TestRemoveLegacy(t *testing.T) {
-	withDataRoot(t)
-	proj := t.TempDir()
-	legacy := filepath.Join(proj, config.LegacyHCDir)
-	if err := os.MkdirAll(filepath.Join(legacy, "x"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if _, _, _, err := config.InitProject(proj); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := os.Stat(legacy); !os.IsNotExist(err) {
-		t.Fatal("legacy dir should be removed")
-	}
-}
-
-func TestEnsureSharedIndexPreservesObsoleteIndexes(t *testing.T) {
-	data := withDataRoot(t)
-	planted := filepath.Join(data, "indexes", "foo")
-	if err := os.MkdirAll(planted, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(planted, config.LegacyPerProjectDBFile), []byte("x"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := config.EnsureSharedIndex(); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := os.Stat(filepath.Join(data, "indexes", "foo", config.LegacyPerProjectDBFile)); err != nil {
-		t.Fatal("obsolete indexes/ must not be purged by EnsureSharedIndex")
-	}
-	ids, err := config.ListLegacyIndexIDs()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(ids) != 1 || ids[0] != "foo" {
-		t.Fatalf("ids=%v", ids)
-	}
-	if err := config.PurgeLegacyIndexes(); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := os.Stat(filepath.Join(data, "indexes")); !os.IsNotExist(err) {
-		t.Fatal("PurgeLegacyIndexes should remove indexes/")
-	}
-}
-
 func TestReset(t *testing.T) {
 	data := withDataRoot(t)
 	proj := t.TempDir()
@@ -143,7 +98,7 @@ func TestReset(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if dbPath != filepath.Join(data, config.IndexFile) {
+	if dbPath != filepath.Join(data, config.DBFile) {
 		t.Fatalf("dbPath=%s", dbPath)
 	}
 	if _, _, err := config.ResetProject(canon); err != nil {
@@ -152,7 +107,7 @@ func TestReset(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(canon, config.MarkerFile)); !os.IsNotExist(err) {
 		t.Fatal("marker should be gone")
 	}
-	// ResetProject only removes marker; shared index.db is left for caller/CLI
+	// ResetProject only removes marker; shared hc.db is left for caller/CLI
 	if st, err := os.Stat(data); err != nil || !st.IsDir() {
 		t.Fatalf("data root should remain: %v", err)
 	}
@@ -209,39 +164,8 @@ func TestDataDirNameIsHC(t *testing.T) {
 	if config.DataDirName != "hc" {
 		t.Fatalf("DataDirName=%q", config.DataDirName)
 	}
-	if config.LegacyDataDirName != "hybrid-coco" {
-		t.Fatalf("LegacyDataDirName=%q", config.LegacyDataDirName)
-	}
 	if config.DBFile != "hc.db" {
 		t.Fatalf("DBFile=%q", config.DBFile)
-	}
-}
-
-func TestMigrateLegacySharedDB(t *testing.T) {
-	root := t.TempDir()
-	legacy := filepath.Join(root, config.LegacySharedDBFile)
-	if err := os.WriteFile(legacy, []byte("sqlite"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	bak := filepath.Join(root, config.LegacySharedDBFile+".bak.20260101T000000Z")
-	if err := os.WriteFile(bak, []byte("bak"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	migrated, err := config.MigrateLegacySharedDB(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !migrated {
-		t.Fatal("expected migration")
-	}
-	if _, err := os.Stat(filepath.Join(root, config.DBFile)); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := os.Stat(legacy); !os.IsNotExist(err) {
-		t.Fatal("legacy index.db should be gone")
-	}
-	if _, err := os.Stat(filepath.Join(root, config.DBFile+".bak.20260101T000000Z")); err != nil {
-		t.Fatal("bak should be renamed")
 	}
 }
 
@@ -270,40 +194,5 @@ func TestClaudeConfigDir_EnvOverride(t *testing.T) {
 	}
 	if got != override {
 		t.Fatalf("got %s want %s", got, override)
-	}
-}
-
-func TestMigrateLegacyDataRoot(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	config.SetDataRootForTest("")
-	config.SetCoreVersion("test")
-	t.Cleanup(func() {
-		config.SetDataRootForTest("")
-		config.SetCoreVersion("")
-	})
-
-	legacy := filepath.Join(home, ".local", "share", config.LegacyDataDirName)
-	if err := os.MkdirAll(legacy, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	marker := filepath.Join(legacy, "marker.txt")
-	if err := os.WriteFile(marker, []byte("ok"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	migrated, err := config.MigrateLegacyDataRoot()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !migrated {
-		t.Fatal("expected migration")
-	}
-	want := filepath.Join(home, ".local", "share", config.DataDirName, "marker.txt")
-	if _, err := os.Stat(want); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := os.Stat(legacy); !os.IsNotExist(err) {
-		t.Fatal("legacy dir should be gone")
 	}
 }

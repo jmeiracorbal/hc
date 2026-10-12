@@ -3,12 +3,11 @@ package registry
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
-	"github.com/jmeiracorbal/hybrid-coco/internal/migrate"
+	"github.com/jmeiracorbal/hc/internal/config"
+	"github.com/jmeiracorbal/hc/internal/migrate"
 
 	_ "modernc.org/sqlite"
 )
@@ -49,64 +48,7 @@ func Open() (*sql.DB, error) {
 		db.Close()
 		return nil, err
 	}
-	if err := importLegacyCocosDB(db); err != nil {
-		db.Close()
-		return nil, err
-	}
 	return db, nil
-}
-
-// importLegacyCocosDB copies rows from obsolete cocos.db into shared hc.db, then removes it.
-func importLegacyCocosDB(dst *sql.DB) error {
-	root, err := config.DataRoot()
-	if err != nil {
-		return err
-	}
-	legacyPath := filepath.Join(root, config.LegacyCocosDBFile)
-	if _, err := os.Stat(legacyPath); err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-	src, err := sql.Open("sqlite", legacyPath)
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
-	rows, err := src.Query(`SELECT id, language, version, priority, contract, wasm_path, manifest_path, installed_at FROM cocos`)
-	if err != nil {
-		// empty/corrupt legacy: still remove so we do not keep a second DB
-		if err2 := os.Remove(legacyPath); err2 != nil {
-			return fmt.Errorf("read legacy cocos.db: %w (cleanup: %v)", err, err2)
-		}
-		return nil
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var r Record
-		var at string
-		if err := rows.Scan(&r.ID, &r.Language, &r.Version, &r.Priority, &r.Contract, &r.WasmPath, &r.ManifestPath, &at); err != nil {
-			return err
-		}
-		t, err := time.Parse(time.RFC3339Nano, at)
-		if err != nil {
-			t, err = time.Parse(time.RFC3339, at)
-			if err != nil {
-				return fmt.Errorf("legacy coco %s installed_at: %w", r.ID, err)
-			}
-		}
-		r.InstalledAt = t
-		if err := Upsert(dst, r); err != nil {
-			return err
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return err
-	}
-	_ = src.Close()
-	return os.Remove(legacyPath)
 }
 
 // DirForID returns the install directory for a coco id (author/name).

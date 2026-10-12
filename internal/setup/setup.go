@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jmeiracorbal/hybrid-coco/assets"
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
-	"github.com/jmeiracorbal/hybrid-coco/internal/store"
-	"github.com/jmeiracorbal/hybrid-coco/skills"
+	"github.com/jmeiracorbal/hc/assets"
+	"github.com/jmeiracorbal/hc/internal/config"
+	"github.com/jmeiracorbal/hc/internal/store"
+	"github.com/jmeiracorbal/hc/skills"
 )
 
 const (
@@ -48,14 +48,14 @@ func InstallGlobal(claudeDir string) (Result, error) {
 	if err != nil {
 		return r, err
 	}
-	dstAwareness := filepath.Join(claudeDir, "hybrid-coco.md")
+	dstAwareness := filepath.Join(claudeDir, "hc.md")
 	if err := os.WriteFile(dstAwareness, awareness, 0o644); err != nil {
 		return r, err
 	}
 	r.AwarenessWritten = true
 
 	claudeMD := filepath.Join(claudeDir, "CLAUDE.md")
-	tag := "@hybrid-coco.md"
+	tag := "@hc.md"
 	content, err := os.ReadFile(claudeMD)
 	if err != nil && !os.IsNotExist(err) {
 		return r, err
@@ -231,7 +231,7 @@ func RegisterMCP(settingsPath string) (Result, error) {
 		servers = map[string]any{}
 		data["mcpServers"] = servers
 	}
-	servers["hybrid-coco"] = mcpEntry
+	servers["hc"] = mcpEntry
 	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
 		return r, err
 	}

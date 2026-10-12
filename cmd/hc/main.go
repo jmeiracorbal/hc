@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/cli"
+	"github.com/jmeiracorbal/hc/internal/cli"
 )
 
 // set via -ldflags "-X main.version=..."

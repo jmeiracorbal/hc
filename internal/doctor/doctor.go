@@ -9,20 +9,18 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco"
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
-	"github.com/jmeiracorbal/hybrid-coco/internal/migrate"
-	"github.com/jmeiracorbal/hybrid-coco/internal/store"
-	"github.com/jmeiracorbal/hybrid-coco/internal/upgrade"
+	"github.com/jmeiracorbal/hc/internal/coco"
+	"github.com/jmeiracorbal/hc/internal/config"
+	"github.com/jmeiracorbal/hc/internal/migrate"
+	"github.com/jmeiracorbal/hc/internal/store"
+	"github.com/jmeiracorbal/hc/internal/upgrade"
 )
 
 const (
 	RepairApplyMigrations     = "apply_migrations"
 	RepairSyncMarkerVersion   = "sync_marker_version"
 	RepairRecreateEmptyDB     = "recreate_empty_db"
-	RepairPurgeLegacyIndexes  = "purge_legacy_indexes"
 	RepairRestoreLatestBackup = "restore_latest_backup"
-	RepairMigrateDataRoot     = "migrate_data_root"
 )
 
 type Report struct {
@@ -31,7 +29,6 @@ type Report struct {
 	DB               DBReport       `json:"db"`
 	Marker           MarkerReport   `json:"marker"`
 	Projects         ProjectsReport `json:"projects"`
-	Legacy           LegacyReport   `json:"legacy"`
 	Cocos            CocosReport    `json:"cocos"`
 	Calls            *CallsReport   `json:"calls,omitempty"`
 	RepairsAvailable []string       `json:"repairs_available"`
@@ -39,10 +36,10 @@ type Report struct {
 }
 
 type CocosReport struct {
-	BuiltinCount   int              `json:"builtin_count"`
-	InstalledCount int              `json:"installed_count"`
-	Installed      []CocoListEntry  `json:"installed,omitempty"`
-	Pins           coco.Pins        `json:"pins,omitempty"`
+	BuiltinCount   int             `json:"builtin_count"`
+	InstalledCount int             `json:"installed_count"`
+	Installed      []CocoListEntry `json:"installed,omitempty"`
+	Pins           coco.Pins       `json:"pins,omitempty"`
 }
 
 type CocoListEntry struct {
@@ -50,12 +47,6 @@ type CocoListEntry struct {
 	Language string `json:"language"`
 	Priority int    `json:"priority"`
 	Version  string `json:"version"`
-}
-
-type LegacyReport struct {
-	Present      bool     `json:"present"`
-	IDs          []string `json:"ids,omitempty"`
-	DataRootPath string   `json:"data_root_path,omitempty"` // obsolete ~/.local/share/hybrid-coco
 }
 
 type BinaryReport struct {
@@ -124,7 +115,6 @@ func Run(cwd string) (Report, error) {
 	r.Schema.Path = dbPath
 	gatherDB(&r, dbPath)
 	gatherMarker(&r, abs)
-	gatherLegacy(&r)
 	gatherCocos(&r, abs)
 	if r.DB.Readable {
 		gatherSchemaStats(&r, dbPath)
@@ -157,21 +147,6 @@ func gatherCocos(r *Report, cwd string) {
 		return
 	}
 	r.Cocos.Pins = pins
-}
-
-func gatherLegacy(r *Report) {
-	ids, err := config.ListLegacyIndexIDs()
-	if err != nil {
-		return
-	}
-	r.Legacy.IDs = ids
-	legacyShare, err := config.LegacyDataRoot()
-	if err == nil {
-		if _, err := os.Stat(legacyShare); err == nil {
-			r.Legacy.DataRootPath = legacyShare
-		}
-	}
-	r.Legacy.Present = len(ids) > 0 || r.Legacy.DataRootPath != ""
 }
 
 func gatherBinary(r *Report) {
@@ -280,10 +255,6 @@ func gatherSchemaStats(r *Report, dbPath string) {
 }
 
 func computeRepairs(r *Report) {
-	// data-root rename before schema work so paths resolve to the live DB
-	if r.Legacy.DataRootPath != "" {
-		r.RepairsAvailable = append(r.RepairsAvailable, RepairMigrateDataRoot)
-	}
 	if r.DB.Readable && len(r.Schema.Pending) > 0 && (r.Schema.Have >= 4 || r.Schema.Have == 0) {
 		r.RepairsAvailable = append(r.RepairsAvailable, RepairApplyMigrations)
 	}
@@ -298,9 +269,6 @@ func computeRepairs(r *Report) {
 		if _, err := os.Stat(r.Schema.Path); err == nil {
 			r.RepairsAvailable = append(r.RepairsAvailable, RepairRecreateEmptyDB)
 		}
-	}
-	if len(r.Legacy.IDs) > 0 {
-		r.RepairsAvailable = append(r.RepairsAvailable, RepairPurgeLegacyIndexes)
 	}
 	// restore only when db is broken / too old — not while pending migrations alone
 	if r.Schema.Path != "" && ((!r.DB.Readable && fileExists(r.Schema.Path)) ||
@@ -332,9 +300,6 @@ func isHealthy(r Report) bool {
 	if r.DB.Readable && !r.DB.ForeignKeys {
 		return false
 	}
-	if r.Legacy.Present {
-		return false
-	}
 	return true
 }
 
@@ -358,19 +323,6 @@ func Fix(report Report, opts FixOpts) ([]string, error) {
 				continue // safe mode: skip destructive
 			}
 			if err := fixRecreateDB(report.Schema.Path); err != nil {
-				return done, err
-			}
-			done = append(done, id)
-		case RepairPurgeLegacyIndexes:
-			if !opts.Yes {
-				continue
-			}
-			if err := config.PurgeLegacyIndexes(); err != nil {
-				return done, err
-			}
-			done = append(done, id)
-		case RepairMigrateDataRoot:
-			if _, err := config.MigrateLegacyDataRoot(); err != nil {
 				return done, err
 			}
 			done = append(done, id)
@@ -466,11 +418,6 @@ func FormatText(r Report) string {
 		out += "  marker: absent\n"
 	}
 	out += fmt.Sprintf("  projects: enrolled=%d\n", r.Projects.EnrolledCount)
-	if r.Legacy.Present {
-		out += fmt.Sprintf("  legacy: indexes/ ids=%v (import: hc migrate --import-legacy --map id=/path)\n", r.Legacy.IDs)
-	} else {
-		out += "  legacy: absent\n"
-	}
 	if r.Calls != nil {
 		out += fmt.Sprintf("  calls: %d/%d resolved\n", r.Calls.Resolved, r.Calls.Total)
 	}

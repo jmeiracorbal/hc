@@ -8,14 +8,14 @@ import (
 	mcpgo "github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/config"
-	"github.com/jmeiracorbal/hybrid-coco/internal/store"
+	"github.com/jmeiracorbal/hc/internal/config"
+	"github.com/jmeiracorbal/hc/internal/store"
 )
 
 // Run starts the MCP server over stdio. Project resolution uses the process cwd
 // on each tool call; .hc is not required to start the server.
 func Run() error {
-	s := server.NewMCPServer("hybrid-coco", "0.3.0", server.WithToolCapabilities(false))
+	s := server.NewMCPServer("hc", "0.3.0", server.WithToolCapabilities(false))
 
 	s.AddTool(mcpgo.NewTool("hc_search",
 		mcpgo.WithDescription("FTS5 search over symbol names, signatures and docstrings. Requires .hc in the project."),

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco/manifest"
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco/registry"
-	"github.com/jmeiracorbal/hybrid-coco/internal/coco/wasmhost"
+	"github.com/jmeiracorbal/hc/internal/coco/manifest"
+	"github.com/jmeiracorbal/hc/internal/coco/registry"
+	"github.com/jmeiracorbal/hc/internal/coco/wasmhost"
 )
 
 // Cache holds loaded wasm modules for reuse across files.

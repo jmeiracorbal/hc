@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jmeiracorbal/hybrid-coco/internal/store"
+	"github.com/jmeiracorbal/hc/internal/store"
 )
 
 const listCap = 20
