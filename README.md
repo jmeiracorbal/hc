@@ -123,7 +123,7 @@ hc init
 - Creates marker `.hc` (project opt-in; id + running `hc` version)
 - Enrolls the project in the shared index at `~/.local/share/hc/hc.db`
 - Indexes the tree (tree-sitter / installed cocos, SHA-256 incremental)
-- Registers the MCP server in `.claude/settings.json`
+- Registers the MCP server in the project `.mcp.json` (`hc init --global`: user scope, `$CLAUDE_CONFIG_DIR/.claude.json` or `~/.claude.json`)
 - Ensures global hooks/skills under `$CLAUDE_CONFIG_DIR` (Claude Code default: `~/.claude`)
 
 Restart Claude Code to activate.

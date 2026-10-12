@@ -570,3 +570,21 @@ class B:
 		t.Fatalf("resolved to %d; want A's run=%d (not B=%d)", cal.SymbolID, runAID, runBID)
 	}
 }
+
+func TestSymlinkedDirIsNotAnError(t *testing.T) {
+	dir := fixtureDir(t)
+	target := filepath.Join(dir, "real")
+	if err := os.MkdirAll(target, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, filepath.Join(dir, "link")); err != nil {
+		t.Fatal(err)
+	}
+	r, err := indexer.IndexPath(dir, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Errors != 0 {
+		t.Fatalf("errors=%d, want 0", r.Errors)
+	}
+}

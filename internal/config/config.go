@@ -115,6 +115,22 @@ func ClaudeConfigDir() (string, error) {
 	return filepath.Join(home, ".claude"), nil
 }
 
+// ClaudeUserMCPFile returns the file holding Claude Code's user-scope MCP servers.
+// With CLAUDE_CONFIG_DIR set it lives inside that directory; otherwise ~/.claude.json.
+func ClaudeUserMCPFile() (string, error) {
+	if dir := os.Getenv("CLAUDE_CONFIG_DIR"); dir != "" {
+		return filepath.Join(dir, ".claude.json"), nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	if home == "" {
+		return "", fmt.Errorf("home directory is required")
+	}
+	return filepath.Join(home, ".claude.json"), nil
+}
+
 func CanonicalRoot(root string) (string, error) {
 	abs, err := filepath.Abs(root)
 	if err != nil {

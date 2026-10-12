@@ -81,6 +81,11 @@ func IndexPath(start string, force bool) (Result, error) {
 			return nil
 		}
 
+		// symlinks (WalkDir does not follow them), sockets, devices
+		if !d.Type().IsRegular() {
+			return nil
+		}
+
 		if shouldSkipFile(rel, gi) {
 			return nil
 		}

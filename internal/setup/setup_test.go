@@ -1,6 +1,7 @@
 package setup_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -127,5 +128,65 @@ func TestInstallGlobal_CustomClaudeConfigDir(t *testing.T) {
 		if _, err := os.Lstat(link); err != nil {
 			t.Fatalf("skill symlink under custom claude dir: %v", err)
 		}
+	}
+}
+
+func TestRegisterMCP_NewProjectFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), ".mcp.json")
+	if _, err := setup.RegisterMCP(path); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]map[string]map[string]any
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["mcpServers"]["hc"]["command"] != "hc" {
+		t.Fatalf("hc server missing: %s", raw)
+	}
+}
+
+func TestRegisterMCP_PreservesUserConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), ".claude.json")
+	orig := `{"numStartups": 1760000000000, "tip": "a<b && c>d", "mcpServers": {"mnemo": {"command": "mnemo"}}}`
+	if err := os.WriteFile(path, []byte(orig), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := setup.RegisterMCP(path); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(raw)
+	for _, want := range []string{`1760000000000`, `"a<b && c>d"`, `"mnemo"`, `"hc"`} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("missing %s in:\n%s", want, text)
+		}
+	}
+	st, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.Mode().Perm() != 0o600 {
+		t.Fatalf("mode=%v, want 0600", st.Mode().Perm())
+	}
+}
+
+func TestRegisterMCP_RefusesInvalidJSON(t *testing.T) {
+	path := filepath.Join(t.TempDir(), ".claude.json")
+	if err := os.WriteFile(path, []byte(`{not json`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := setup.RegisterMCP(path); err == nil {
+		t.Fatal("expected error on invalid JSON")
+	}
+	raw, _ := os.ReadFile(path)
+	if string(raw) != `{not json` {
+		t.Fatalf("file was modified: %s", raw)
 	}
 }

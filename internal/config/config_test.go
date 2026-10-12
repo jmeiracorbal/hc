@@ -196,3 +196,28 @@ func TestClaudeConfigDir_EnvOverride(t *testing.T) {
 		t.Fatalf("got %s want %s", got, override)
 	}
 }
+
+func TestClaudeUserMCPFile_Default(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("CLAUDE_CONFIG_DIR", "")
+	got, err := config.ClaudeUserMCPFile()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := filepath.Join(home, ".claude.json"); got != want {
+		t.Fatalf("got %s want %s", got, want)
+	}
+}
+
+func TestClaudeUserMCPFile_EnvOverride(t *testing.T) {
+	override := filepath.Join(t.TempDir(), "profiles", "work", "claude")
+	t.Setenv("CLAUDE_CONFIG_DIR", override)
+	got, err := config.ClaudeUserMCPFile()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := filepath.Join(override, ".claude.json"); got != want {
+		t.Fatalf("got %s want %s", got, want)
+	}
+}
