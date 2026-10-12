@@ -30,7 +30,7 @@ Project index lifecycle for hc. Independent from **hc-navigate** / **hc-graph**;
 
 ```bash
 hc --version          # binary on PATH
-hc init .             # .hc + enroll + index + MCP in .claude/settings.json
+hc init .             # .hc + enroll + index + MCP in .mcp.json
 # restart Claude Code so MCP/skills reload
 hc_status()           # or: hc status
 ```

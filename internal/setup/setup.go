@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -220,9 +221,11 @@ func ensureDirSymlink(link, target string) error {
 	return nil
 }
 
-func RegisterMCP(settingsPath string) (Result, error) {
+// RegisterMCP adds the hc server under mcpServers in a Claude Code MCP config file
+// (project .mcp.json or the user-scope .claude.json), preserving other keys.
+func RegisterMCP(configPath string) (Result, error) {
 	var r Result
-	data, err := readJSON(settingsPath)
+	data, err := readJSON(configPath)
 	if err != nil {
 		return r, err
 	}
@@ -232,18 +235,20 @@ func RegisterMCP(settingsPath string) (Result, error) {
 		data["mcpServers"] = servers
 	}
 	servers["hc"] = mcpEntry
-	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		return r, err
 	}
-	if err := writeJSON(settingsPath, data); err != nil {
+	if err := writeJSON(configPath, data); err != nil {
 		return r, err
 	}
 	r.MCPRegistered = true
-	r.MCPPath = settingsPath
+	r.MCPPath = configPath
 	r.Tools = append([]string{}, mcpTools...)
 	return r, nil
 }
 
+// readJSON returns an empty object for a missing file and an error for invalid JSON,
+// so a config we cannot parse is never overwritten. Numbers stay as json.Number.
 func readJSON(path string) (map[string]any, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -253,8 +258,12 @@ func readJSON(path string) (map[string]any, error) {
 		return nil, err
 	}
 	var data map[string]any
-	if err := json.Unmarshal(raw, &data); err != nil {
-		return map[string]any{}, nil
+	if len(bytes.TrimSpace(raw)) > 0 {
+		dec := json.NewDecoder(bytes.NewReader(raw))
+		dec.UseNumber()
+		if err := dec.Decode(&data); err != nil {
+			return nil, fmt.Errorf("parse %s: %w", path, err)
+		}
 	}
 	if data == nil {
 		data = map[string]any{}
@@ -262,13 +271,36 @@ func readJSON(path string) (map[string]any, error) {
 	return data, nil
 }
 
+// writeJSON replaces path atomically, keeping the existing file mode.
 func writeJSON(path string, data map[string]any) error {
-	out, err := json.MarshalIndent(data, "", "  ")
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(data); err != nil {
+		return err
+	}
+	mode := os.FileMode(0o644)
+	if st, err := os.Stat(path); err == nil {
+		mode = st.Mode().Perm()
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(path), "."+filepath.Base(path)+".tmp-*")
 	if err != nil {
 		return err
 	}
-	out = append(out, '\n')
-	return os.WriteFile(path, out, 0o644)
+	defer os.Remove(tmp.Name())
+	if _, err := tmp.Write(buf.Bytes()); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Chmod(mode); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), path)
 }
 
 func asSlice(v any) []any {

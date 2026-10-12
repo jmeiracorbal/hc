@@ -446,24 +446,22 @@ func cmdInit() *cobra.Command {
 			fmt.Printf("  ✓ Index: %s\n", dbPath)
 			fmt.Printf("  ✓ ID: %s…\n\n", idShort)
 
-			var settingsPath string
-			var label string
 			claudeDir, err := config.ClaudeConfigDir()
 			if err != nil {
 				return err
 			}
+			mcpPath := filepath.Join(canon, ".mcp.json")
 			if globalConfig {
-				settingsPath = filepath.Join(claudeDir, "settings.json")
-				label = settingsPath
-			} else {
-				settingsPath = filepath.Join(canon, ".claude", "settings.json")
-				label = ".claude/settings.json"
+				mcpPath, err = config.ClaudeUserMCPFile()
+				if err != nil {
+					return err
+				}
 			}
-			mcpRes, err := setup.RegisterMCP(settingsPath)
+			mcpRes, err := setup.RegisterMCP(mcpPath)
 			if err != nil {
 				return err
 			}
-			fmt.Printf("MCP server registered in %s\n", label)
+			fmt.Printf("MCP server registered in %s\n", mcpPath)
 			for _, t := range mcpRes.Tools {
 				fmt.Printf("  ✓ %s\n", t)
 			}
@@ -491,7 +489,7 @@ func cmdInit() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().BoolVar(&globalConfig, "global", false, "Register in CLAUDE_CONFIG_DIR/settings.json (default ~/.claude) instead of .claude/settings.json")
+	cmd.Flags().BoolVar(&globalConfig, "global", false, "Register the MCP server in user scope (CLAUDE_CONFIG_DIR/.claude.json, default ~/.claude.json) instead of project .mcp.json")
 	return cmd
 }
 
