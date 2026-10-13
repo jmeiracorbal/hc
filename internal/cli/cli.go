@@ -457,6 +457,13 @@ func cmdInit() *cobra.Command {
 					return err
 				}
 			}
+			// a pre-existing .mcp.json is shared by the team; only hide one hc creates
+			localFiles := []string{config.MarkerFile}
+			if !globalConfig {
+				if _, err := os.Stat(mcpPath); os.IsNotExist(err) {
+					localFiles = append(localFiles, ".mcp.json")
+				}
+			}
 			mcpRes, err := setup.RegisterMCP(mcpPath)
 			if err != nil {
 				return err
@@ -466,6 +473,14 @@ func cmdInit() *cobra.Command {
 				fmt.Printf("  ✓ %s\n", t)
 			}
 			fmt.Println()
+
+			excluded, err := setup.ExcludeLocal(canon, localFiles...)
+			if err != nil {
+				return err
+			}
+			if len(excluded) > 0 {
+				fmt.Printf("  ✓ git local exclude: %s\n\n", strings.Join(excluded, ", "))
+			}
 
 			g, err := setup.InstallGlobal(claudeDir)
 			if err != nil {
