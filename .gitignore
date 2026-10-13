@@ -1,0 +1,20 @@
+# Go
+/hc
+*.exe
+*.test
+*.out
+
+# Indexes / local
+.hc
+.mcp.json
+.mnemo
+*.db
+.claude/
+.codegraph/
+.cursor/
+.pi/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
