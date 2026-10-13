@@ -13,6 +13,8 @@
 .codegraph/
 .cursor/
 .pi/
+/AGENTS.md
+/CLAUDE.md
 
 # OS / editors
 .DS_Store
