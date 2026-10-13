@@ -15,7 +15,7 @@ import (
 // Run starts the MCP server over stdio. Project resolution uses the process cwd
 // on each tool call; .hc is not required to start the server.
 func Run() error {
-	s := server.NewMCPServer("hc", "0.4.1", server.WithToolCapabilities(false))
+	s := server.NewMCPServer("hc", "0.4.2", server.WithToolCapabilities(false))
 
 	s.AddTool(mcpgo.NewTool("hc_search",
 		mcpgo.WithDescription("FTS5 search over symbol names, signatures and docstrings. Requires .hc in the project."),

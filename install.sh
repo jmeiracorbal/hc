@@ -3,7 +3,7 @@
 # Usage: curl -sSf https://raw.githubusercontent.com/jmeiracorbal/hc/main/install.sh | bash
 #
 # Environment overrides:
-#   HC_VERSION=v0.4.1 bash install.sh
+#   HC_VERSION=v0.4.2 bash install.sh
 #   HC_INSTALL_DIR=$HOME/bin bash install.sh
 #   HC_DRY_RUN=true bash install.sh
 
